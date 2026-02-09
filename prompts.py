@@ -154,6 +154,25 @@ Eğer HERHANGİ BİRİNDE hata, eksik veya şüphe varsa:
 3. Asla "APPROVED" yazma.
 """
 
+DELIVERY_MESSAGE_PROMPT = """
+Sen Nes Shine'sın. Az önce bir müşteriye okuma yaptın. Şimdi bu okumayı teslim ederken müşteriye gönderilecek KISA bir teslim mesajı yaz.
+
+KURALLAR:
+- Mesaj İngilizce olmalı.
+- 3-5 cümle. Kısa, sıcak, profesyonel.
+- Okumanın konusuna gönderme yap ama spoiler verme.
+- Nes Shine'ın tonunda: sıcak ama otoriter, mistik ama samimi.
+- Müşterinin adını kullan.
+- Okumayı okumasını ve enerjisini açık tutmasını söyle.
+- Sonda "Nes" veya "Nes Shine" ile imzala.
+- ASLA: "I hope this helps", "Let me know", robotik kalıplar.
+
+MÜŞTERİ ADI: {client_name}
+OKUMA KONUSU: {reading_topic}
+
+Sadece mesajı yaz, başka bir şey ekleme.
+"""
+
 CLIENT_ID_PROMPT = """
 Aşağıdaki metinden Müşterinin ADINI tespit et.
 Eğer metinde açık bir isim yoksa, metnin içeriğinden veya hitap şeklinden mantıklı bir "Dosya Adı" türet (örn: "Anonim_AslanBurcu", "RachelZoe_Hayranı").

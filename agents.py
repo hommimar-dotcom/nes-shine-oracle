@@ -152,8 +152,26 @@ class OracleBrain:
                 if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
                 if progress_callback: progress_callback("Nes Shine Hafızaya Kaydediyor...")
                 self.update_memory(draft, memory_key, mem_mgr)
-                return draft
+                
+                # DELIVERY MESSAGE
+                if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")
+                delivery_msg = self.generate_delivery_message(client_name, reading_topic)
+                
+                return draft, delivery_msg
             
             if progress_callback: progress_callback(f"Revize gerekiyor (Tur {iteration}): {review_notes[:100]}...")
             draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes)
+    
+    def generate_delivery_message(self, client_name, reading_topic):
+        """Generates a short delivery message for the client."""
+        from prompts import DELIVERY_MESSAGE_PROMPT
+        try:
+            prompt = DELIVERY_MESSAGE_PROMPT.format(
+                client_name=client_name,
+                reading_topic=reading_topic
+            )
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+        except Exception as e:
+            return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
 

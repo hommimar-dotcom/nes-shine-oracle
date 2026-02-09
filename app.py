@@ -405,6 +405,8 @@ with tab1:
             st.session_state.final_html = None
         if "pdf_path" not in st.session_state:
             st.session_state.pdf_path = None
+        if "delivery_msg" not in st.session_state:
+            st.session_state.delivery_msg = None
     
         if generate_btn and api_key:
             if not order_note or not reading_topic:
@@ -421,7 +423,8 @@ with tab1:
                         status_container.markdown(f"**SYSTEM STATUS:** `{clean_msg.strip().upper()}`")
                         time.sleep(0.1)
                     
-                    raw_text = brain.run_cycle(order_note, reading_topic, client_email=client_email, target_length=target_len, progress_callback=update_status)
+                    raw_text, delivery_msg = brain.run_cycle(order_note, reading_topic, client_email=client_email, target_length=target_len, progress_callback=update_status)
+                    st.session_state.delivery_msg = delivery_msg
                     
                     # 2. FORMAT HTML
                     update_status("COMPILING HTML ARCHITECTURE...")
@@ -475,6 +478,13 @@ with tab1:
                             file_name=os.path.basename(st.session_state.pdf_path),
                             mime="text/html"
                         )
+            
+            # DELIVERY MESSAGE
+            if st.session_state.delivery_msg:
+                st.markdown("---")
+                st.markdown("### 📨 DELIVERY MESSAGE")
+                st.caption("Copy and send this to the client with the reading:")
+                st.code(st.session_state.delivery_msg, language=None)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
