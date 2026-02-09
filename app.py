@@ -287,19 +287,24 @@ with st.sidebar:
         import_email = st.text_input("Client Email", key="import_email", placeholder="e.g. jessica@gmail.com")
         uploaded_pdf = st.file_uploader("Upload Reading PDF", type=["pdf"], key="import_pdf")
         
-        if st.button("🔮 ANALYZE & IMPORT", key="analyze_import", disabled=not api_key):
-            if import_email and uploaded_pdf:
-                with st.spinner("AI analyzing PDF..."):
+        # Button is ALWAYS enabled to give feedback
+        if st.button("🔮 ANALYZE & IMPORT", key="analyze_import"):
+            if not api_key:
+                st.error("⚠️ Lütfen önce sol menüden API Access Key giriniz.")
+            elif not import_email or not uploaded_pdf:
+                st.warning("⚠️ Email ve PDF dosyası gereklidir.")
+            else:
+                st.toast("Analiz başlatılıyor... lütfen bekleyin.", icon="⏳")
+                with st.spinner("AI PDF'i okuyor ve analiz ediyor..."):
                     success, result = mem_mgr.analyze_pdf_and_create_client(import_email, uploaded_pdf, api_key)
                     
                 if success:
-                    st.success(f"✅ Client '{import_email}' imported!")
+                    st.success(f"✅ İŞLEM BAŞARILI! Müşteri '{import_email}' hafızaya eklendi.")
                     st.json(result)
+                    time.sleep(2)
                     st.rerun()
                 else:
-                    st.error(result)
-            else:
-                st.warning("Email and PDF are required.")
+                    st.error(f"HATA: {result}")
 
     st.markdown("---")
     
