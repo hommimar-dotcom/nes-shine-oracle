@@ -6,10 +6,26 @@ import google.generativeai as genai
 from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_ID_PROMPT, MEMORY_UPDATE_PROMPT
 
 class OracleBrain:
+    # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
+    REQUIRED_MODEL = "gemini-3-pro-preview"
+    
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
-        # Using Gemini 3 Pro Preview
-        self.model = genai.GenerativeModel("gemini-3-pro-preview")
+        
+        # Generation config - YÜKSEKtemperature = DAHA İNSANSI YAZI
+        # temperature 1.3 = daha yaratıcı, daha az tahmin edilebilir
+        # top_p 0.95 = geniş kelime havuzu
+        # top_k 64 = daha fazla seçenek
+        self.generation_config = genai.types.GenerationConfig(
+            temperature=1.3,
+            top_p=0.95,
+            top_k=64,
+        )
+        
+        self.model = genai.GenerativeModel(
+            self.REQUIRED_MODEL,
+            generation_config=self.generation_config
+        )
         
     def identify_client(self, text):
         """Extracts client name from order note."""
