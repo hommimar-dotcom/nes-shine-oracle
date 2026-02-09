@@ -1,0 +1,159 @@
+
+import os
+import time
+import json
+import google.generativeai as genai
+from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_ID_PROMPT, MEMORY_UPDATE_PROMPT
+
+class OracleBrain:
+    def __init__(self, api_key):
+        genai.configure(api_key=api_key)
+        # Using Gemini 3 Pro Preview
+        self.model = genai.GenerativeModel("gemini-3-pro-preview")
+        
+    def identify_client(self, text):
+        """Extracts client name from order note."""
+        prompt = CLIENT_ID_PROMPT.format(text=text)
+        resp = self.model.generate_content(prompt)
+        identified_name = resp.text.strip()
+        self.last_client_name = identified_name
+        return identified_name
+
+
+    def update_memory(self, reading_text, client_name, memory_manager):
+        prompt = MEMORY_UPDATE_PROMPT.format(reading_text=reading_text)
+        resp = self.model.generate_content(prompt)
+        try:
+            # Robust JSON extraction using regex
+            import re
+            json_match = re.search(r'\{.*\}', resp.text, re.DOTALL)
+            if json_match:
+                clean_json = json_match.group(0)
+                data = json.loads(clean_json)
+                
+                # Load current memory
+                mem = memory_manager.load_memory(client_name)
+                
+                # Add new session
+                new_session = {
+                    "date": time.strftime("%Y-%m-%d"),
+                    "topic": data.get("topic", "Genel"),
+                    "key_prediction": data.get("key_prediction", ""),
+                    "hook_left": data.get("hook_left", ""),
+                    "client_mood": data.get("client_mood", "")
+                }
+                
+                mem["sessions"].append(new_session)
+                memory_manager.save_memory(client_name, mem)
+                return True
+            return False
+        except:
+            return False
+
+    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None):
+        """
+        The Writer Agent (Nes Shine).
+        If feedback is provided, it means a revision is requested.
+        """
+        prompt = f"""
+        {NES_SHINE_CORE_INSTRUCTIONS}
+        
+        --- HAFIZA VE GEÇMİŞ BAĞLAMI (Memory Context) ---
+        {memory_context}
+        
+        --- MÜŞTERİ VERİSİ ---
+        SIPARİŞ NOTU:
+        {order_note}
+        
+        OKUMA KONUSU:
+        {reading_topic}
+        
+        --- HEDEF UZUNLUK ---
+        HEDEF: Minimum {target_length} karakter.
+        Bu uzunluğa ulaşmak için her bir başlığı, hissi ve görüyü detaylandır. Kısa kesme.
+        """
+        
+        if feedback:
+            prompt += f"""
+            
+            --- ÖNCEKİ DENEME REDDEDİLDİ. GRANDMASTER GERİ BİLDİRİMİ: ---
+            {feedback}
+            
+            Lütfen yukarıdaki eleştirileri dikkate alarak metni YENİDEN YAZ.
+            """
+            
+        response = self.model.generate_content(prompt)
+        return response.text
+
+    def grandmaster_agent(self, draft_text, order_note, target_length):
+        """
+        The QC Agent. Checks quality.
+        Returns (bool, string) -> (IS_APPROVED, FEEDBACK)
+        """
+        prompt = f"""
+        {GRANDMASTER_QC_PROMPT}
+        
+        --- HEDEF UZUNLUK KRİTERİ ---
+        Bu okuma için hedeflenen minimum uzunluk: {target_length} karakter.
+        (Mevcut taslak bu uzunluğa yaklaşmalı ve kısa kalmamalı).
+        
+        --- İNCELENECEK TASLAK ---
+        {draft_text}
+        
+        --- ORİJİNAL MÜŞTERİ NOTU (Context Kontrolü İçin) ---
+        {order_note}
+        """
+        
+        response = self.model.generate_content(prompt)
+        feedback = response.text.strip()
+        
+        if "APPROVED" in feedback:
+            return True, "Onaylandı. Mükemmel."
+        else:
+            # Clean up the feedback to be ready for the medium
+            return False, feedback
+
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None):
+        """
+        Runs the full generation loop with Memory Integration.
+        client_email: Client's email address (e.g., "jessica@gmail.com") - used as memory key for 100% accuracy
+        """
+        from memory import MemoryManager
+        mem_mgr = MemoryManager()
+        
+        # 1. IDENTIFY CLIENT NAME (for display/filename only)
+        if progress_callback: progress_callback("Nes Shine: Müşteri Kimliği Taranıyor...")
+        client_name = self.identify_client(order_note)
+        if progress_callback: progress_callback(f"Müşteri Tanımlandı: {client_name}")
+        
+        # 2. DETERMINE MEMORY KEY (Use Email if provided, otherwise fallback to client name)
+        memory_key = client_email if client_email else client_name
+        
+        # 3. LOAD MEMORY
+        memory_data = mem_mgr.load_memory(memory_key)
+        memory_context = mem_mgr.format_context_for_prompt(memory_data)
+        
+        if progress_callback: progress_callback("Akashic Records (Hafıza) Yüklendi...")
+        
+        # 4. DRAFTING LOOP
+        if progress_callback: progress_callback("Nes Shine tünelliyor... (Taslak Hazırlanıyor)")
+        
+        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context)
+        
+        # QC Loop - SINIRSIZ: %100 ONAY ALANA KADAR DEVAM EDER
+        iteration = 0
+        while True:
+            iteration += 1
+            if progress_callback: progress_callback(f"Grandmaster Kalite Kontrolü Yapıyor... (Tur {iteration})")
+            
+            approved, review_notes = self.grandmaster_agent(draft, order_note, target_length)
+            
+            if approved:
+                if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
+                if progress_callback: progress_callback("Nes Shine Hafızaya Kaydediyor...")
+                self.update_memory(draft, memory_key, mem_mgr)
+                return draft
+            
+            if progress_callback: progress_callback(f"Revize gerekiyor (Tur {iteration}): {review_notes[:100]}...")
+            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes)
+

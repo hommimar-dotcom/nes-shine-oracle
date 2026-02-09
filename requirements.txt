@@ -1,0 +1,5 @@
+streamlit
+google-generativeai
+python-dotenv
+nest_asyncio
+PyPDF2
