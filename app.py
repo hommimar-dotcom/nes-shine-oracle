@@ -166,7 +166,7 @@ st.markdown("""
     /* REMOVE DEFAULT STREAMLIT DECORATION */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* header {visibility: hidden;}  <-- REMOVED TO SHOW SIDEBAR TOGGLE */
     
     /* MOBILE RESPONSIVE */
     @media (max-width: 768px) {
