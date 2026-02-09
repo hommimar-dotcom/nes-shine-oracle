@@ -4,3 +4,4 @@ python-dotenv
 nest_asyncio
 PyPDF2
 sendgrid
+supabase

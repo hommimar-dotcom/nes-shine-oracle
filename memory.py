@@ -2,58 +2,112 @@
 import json
 import os
 import re
-
-MEMORY_DIR = "client_memories"
+import datetime
 
 def sanitize_filename(name):
-    """
-    Sanitizes string to be safe for filenames.
-    """
     return re.sub(r'[^a-zA-Z0-9]', '', name)
+
+
+def get_supabase_client():
+    """Get Supabase client using environment variables or Streamlit secrets."""
+    try:
+        from supabase import create_client
+        
+        # Try environment variables first
+        url = os.environ.get("SUPABASE_URL", "")
+        key = os.environ.get("SUPABASE_KEY", "")
+        
+        # Try Streamlit secrets if env vars not set
+        if not url or not key:
+            try:
+                import streamlit as st
+                url = st.secrets.get("SUPABASE_URL", "")
+                key = st.secrets.get("SUPABASE_KEY", "")
+            except:
+                pass
+        
+        if url and key:
+            return create_client(url, key)
+        return None
+    except ImportError:
+        return None
+
 
 class MemoryManager:
     def __init__(self):
-        if not os.path.exists(MEMORY_DIR):
-            os.makedirs(MEMORY_DIR)
-
-    def load_memory(self, client_name):
-        """
-        Loads the memory file for a given client name.
-        Returns a dictionary or empty structure if new.
-        """
-        filename = f"{sanitize_filename(client_name)}.json"
-        path = os.path.join(MEMORY_DIR, filename)
+        self.supabase = get_supabase_client()
+        self.use_db = self.supabase is not None
         
+        # Fallback to local files if no Supabase
+        if not self.use_db:
+            if not os.path.exists("client_memories"):
+                os.makedirs("client_memories")
+
+    # ==================== LOAD ====================
+    def load_memory(self, client_name):
+        if self.use_db:
+            return self._db_load(client_name)
+        return self._file_load(client_name)
+    
+    def _db_load(self, client_name):
+        key = sanitize_filename(client_name)
+        try:
+            result = self.supabase.table("client_memories").select("*").eq("client_key", key).execute()
+            if result.data:
+                row = result.data[0]
+                return {
+                    "client_name": row["client_name"],
+                    "sessions": json.loads(row["sessions"])
+                }
+        except:
+            pass
+        return {"client_name": client_name, "sessions": []}
+    
+    def _file_load(self, client_name):
+        filename = f"{sanitize_filename(client_name)}.json"
+        path = os.path.join("client_memories", filename)
         if os.path.exists(path):
             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except:
-                return {"client_name": client_name, "sessions": []}
-        else:
-            return {"client_name": client_name, "sessions": []}
+                pass
+        return {"client_name": client_name, "sessions": []}
 
+    # ==================== SAVE ====================
     def save_memory(self, client_name, memory_data):
-        """
-        Saves the updated memory data to JSON.
-        """
+        if self.use_db:
+            return self._db_save(client_name, memory_data)
+        return self._file_save(client_name, memory_data)
+    
+    def _db_save(self, client_name, memory_data):
+        key = sanitize_filename(client_name)
+        row = {
+            "client_key": key,
+            "client_name": client_name,
+            "sessions": json.dumps(memory_data.get("sessions", []), ensure_ascii=False),
+            "updated_at": datetime.datetime.now().isoformat()
+        }
+        try:
+            # Upsert (insert or update)
+            self.supabase.table("client_memories").upsert(row, on_conflict="client_key").execute()
+            return True
+        except Exception as e:
+            print(f"DB save error: {e}")
+            return False
+    
+    def _file_save(self, client_name, memory_data):
         filename = f"{sanitize_filename(client_name)}.json"
-        path = os.path.join(MEMORY_DIR, filename)
-        
+        path = os.path.join("client_memories", filename)
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(memory_data, f, ensure_ascii=False, indent=4)
 
+    # ==================== FORMAT ====================
     def format_context_for_prompt(self, memory_data):
-        """
-        Formats past sessions into a string string for the LLM prompt.
-        Only takes the last 3 sessions to save context window (or all if short).
-        """
         if not memory_data.get("sessions"):
             return "BU MÜŞTERİ İLE İLK DEFA GÖRÜŞÜYORSUN."
             
         context = f"BU MÜŞTERİ ({memory_data['client_name']}) İLE GEÇMİŞ GÖRÜŞMELERİN:\n"
-        
-        # Take last 3 sessions
         recent_history = memory_data["sessions"][-3:]
         
         for idx, session in enumerate(recent_history):
@@ -66,15 +120,33 @@ class MemoryManager:
         context += "\n!!! KRİTİK: YUKARIDAKİ GEÇMİŞ BİLGİLERLE ASLA ÇELİŞME. DEVAMLILIK SAĞLA !!!\n"
         return context
 
+    # ==================== LIST ALL ====================
     def list_all_clients(self):
-        """
-        Returns a list of all clients in memory.
-        """
+        if self.use_db:
+            return self._db_list_all()
+        return self._file_list_all()
+    
+    def _db_list_all(self):
         clients = []
-        if os.path.exists(MEMORY_DIR):
-            for filename in os.listdir(MEMORY_DIR):
+        try:
+            result = self.supabase.table("client_memories").select("client_key, client_name, sessions").execute()
+            for row in result.data:
+                sessions = json.loads(row["sessions"]) if isinstance(row["sessions"], str) else row["sessions"]
+                clients.append({
+                    "filename": row["client_key"],
+                    "client_name": row["client_name"],
+                    "session_count": len(sessions) if sessions else 0
+                })
+        except:
+            pass
+        return clients
+    
+    def _file_list_all(self):
+        clients = []
+        if os.path.exists("client_memories"):
+            for filename in os.listdir("client_memories"):
                 if filename.endswith('.json'):
-                    path = os.path.join(MEMORY_DIR, filename)
+                    path = os.path.join("client_memories", filename)
                     try:
                         with open(path, 'r', encoding='utf-8') as f:
                             data = json.load(f)
@@ -91,32 +163,35 @@ class MemoryManager:
                         })
         return clients
 
+    # ==================== DELETE ====================
     def delete_client(self, client_name):
-        """
-        Deletes a client's memory file.
-        """
+        if self.use_db:
+            return self._db_delete(client_name)
+        return self._file_delete(client_name)
+    
+    def _db_delete(self, client_name):
+        key = sanitize_filename(client_name)
+        try:
+            self.supabase.table("client_memories").delete().eq("client_key", key).execute()
+            return True
+        except:
+            return False
+    
+    def _file_delete(self, client_name):
         filename = f"{sanitize_filename(client_name)}.json"
-        path = os.path.join(MEMORY_DIR, filename)
-        
+        path = os.path.join("client_memories", filename)
         if os.path.exists(path):
             os.remove(path)
             return True
         return False
 
+    # ==================== CREATE ====================
     def create_client(self, client_name, topic, key_prediction, hook_left, client_mood, date=None):
-        """
-        Manually creates a client with past session data.
-        Used for importing old clients before the system existed.
-        """
-        import datetime
-        
         if date is None:
             date = datetime.datetime.now().strftime("%Y-%m-%d")
         
-        # Load existing or create new
         memory_data = self.load_memory(client_name)
         
-        # Add new session
         new_session = {
             "date": date,
             "topic": topic,
@@ -127,18 +202,14 @@ class MemoryManager:
         
         memory_data["sessions"].append(new_session)
         self.save_memory(client_name, memory_data)
-        
         return True
 
+    # ==================== PDF ANALYZE ====================
     def analyze_pdf_and_create_client(self, client_email, pdf_file, api_key):
-        """
-        Analyzes a PDF reading file using AI and automatically extracts all session data.
-        """
         import io
         from PyPDF2 import PdfReader
         import google.generativeai as genai
         
-        # Extract text from PDF
         try:
             pdf_reader = PdfReader(io.BytesIO(pdf_file.read()))
             text = ""
@@ -150,7 +221,6 @@ class MemoryManager:
         if not text.strip():
             return False, "PDF'den metin çıkarılamadı."
         
-        # Use AI to analyze the reading
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3-pro-preview")
         
@@ -168,23 +238,19 @@ class MemoryManager:
         Sadece JSON döndür, başka bir şey yazma.
         
         OKUMA METNİ:
-        """ + text[:8000]  # Limit text to avoid token overflow
+        """ + text[:8000]
         
         try:
             response = model.generate_content(analysis_prompt)
             result_text = response.text.strip()
             
-            # Clean up JSON
             if "```json" in result_text:
                 result_text = result_text.split("```json")[1].split("```")[0]
             elif "```" in result_text:
                 result_text = result_text.split("```")[1].split("```")[0]
             
-            import json
             analysis = json.loads(result_text)
             
-            # Create client with analyzed data
-            import datetime
             self.create_client(
                 client_name=client_email,
                 topic=analysis.get("topic", "Unknown"),
