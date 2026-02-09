@@ -307,20 +307,14 @@ with st.sidebar:
                     st.error(f"HATA: {result}")
 
     st.markdown("---")
-    
-    # DEBUG: MODEL CHECKER
-    with st.expander("🛠️ MODEL CHECKER", expanded=False):
-        if st.button("LIST MY MODELS", disabled=not api_key):
-            try:
-                genai.configure(api_key=api_key)
-                models = [m.name for m in genai.list_models()]
-                st.success(f"Found {len(models)} models")
-                st.code("\n".join(models))
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-
-    st.markdown("---")
     st.caption("NES SHINE // ENGINE V3.0")
+    
+    # SUPABASE CONNECTION CHECK
+    if mem_mgr.use_db:
+        st.caption("🟢 DATABASE CONNECTED (Supabase)")
+    else:
+        st.caption("🔴 LOCAL STORAGE (Temporary)")
+        
     st.caption("STATUS: OPERATIONAL")
     
     # EMAIL CAMPAIGNS SECTION
@@ -491,12 +485,6 @@ with tab1:
                 st.caption("Copy and send this to the client with the reading:")
                 st.code(st.session_state.delivery_msg, language=None)
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Preview HTML (iframe)
-            st.caption("PREVIEW WINDOW")
-            st.components.v1.html(st.session_state.final_html, height=700, scrolling=True)
-            
             # RAW TEXT EXPANDER
             with st.expander("VIEW SOURCE CODE"):
                 st.text_area("HTML SOURCE", value=st.session_state.final_html, height=200)
@@ -538,6 +526,15 @@ with tab2:
             else:
                 st.warning("Please fill all fields")
     
+    # Pending Items List
+    pending_items = queue_mgr.get_queue()
+    if pending_items:
+        st.markdown("### ⏳ PENDING QUEUE")
+        for p_item in pending_items:
+            with st.expander(f"WAITING: {p_item['client_email']} - {p_item['reading_topic'][:30]}...", expanded=True):
+                st.write(p_item['order_note'])
+                st.caption(f"Added: {p_item['added_at']}")
+
     # Process Queue Button
     st.markdown("---")
     if st.button("🚀 PROCESS QUEUE", disabled=not api_key):
@@ -555,7 +552,8 @@ with tab2:
                 
                 try:
                     brain = OracleBrain(api_key)
-                    raw_text = brain.run_cycle(
+                    # Fixed: Unpacking tuple return locally
+                    raw_text, delivery_msg = brain.run_cycle(
                         item["order_note"],
                         item["reading_topic"],
                         client_email=item["client_email"],
@@ -575,7 +573,7 @@ with tab2:
                     pdf_filename = f"NesShine_{safe_client}_{safe_topic}_{int(time.time())}.pdf"
                     pdf_path = create_pdf(full_html, pdf_filename)
                     
-                    queue_mgr.mark_completed(item["id"], pdf_path)
+                    queue_mgr.mark_completed(item["id"], pdf_path, delivery_msg)
                     
                 except Exception as e:
                     queue_mgr.mark_failed(item["id"], str(e))
@@ -594,6 +592,10 @@ with tab2:
         for item in reversed(completed):
             with st.expander(f"📄 {item['client_email']} - {item['reading_topic'][:30]}..."):
                 st.caption(f"Completed: {item['completed_at'][:16]}")
+                # Delivery msg display
+                if item.get("delivery_msg"):
+                    st.code(item["delivery_msg"], language=None)
+                
                 if item.get("pdf_path") and os.path.exists(item["pdf_path"]):
                     with open(item["pdf_path"], "rb") as pdf_file:
                         st.download_button(
@@ -605,4 +607,3 @@ with tab2:
                         )
     else:
         st.caption("No completed readings yet")
-
