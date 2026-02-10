@@ -237,7 +237,7 @@ class MemoryManager:
             "hook_left": "Gelecek için bırakılan merak uyandırıcı ipucu (varsa)",
             "client_mood": "Müşterinin ruh hali",
             "client_name": "Müşterinin adı (Dosya isminden veya metindeki 'Dear X' hitabından çıkar)",
-            "target_name": "Soru sorulan veya odaklanılan diğer kişi (örn: Partner, Ex, İlgi duyulan kişi). Yoksa null döndür."
+            "target_name": "Okumada adı geçen ve odaklanılan tüm kişiler (örn: Shane, Doug, Sarah). Aralarına virgül koyarak yaz. Yoksa null döndür."
         }}
         
         Sadece JSON döndür.
