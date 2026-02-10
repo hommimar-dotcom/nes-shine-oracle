@@ -27,10 +27,22 @@ class OracleBrain:
             generation_config=self.generation_config
         )
         
+        # LOW TEMP CONFIG FOR FACTS (Extraction & System Messages)
+        self.extraction_config = genai.types.GenerationConfig(
+            temperature=0.1, # Low temp specifically to prevent hallucinations
+            top_p=0.95,
+            top_k=64,
+        )
+        self.extraction_model = genai.GenerativeModel(
+            self.REQUIRED_MODEL,
+            generation_config=self.extraction_config
+        )
+        
     def identify_client(self, text):
         """Extracts client name from order note."""
         prompt = CLIENT_ID_PROMPT.format(text=text)
-        resp = self.model.generate_content(prompt)
+        # Use Low Temp Model
+        resp = self.extraction_model.generate_content(prompt)
         identified_name = resp.text.strip()
         self.last_client_name = identified_name
         return identified_name
@@ -38,7 +50,8 @@ class OracleBrain:
 
     def update_memory(self, reading_text, client_name, memory_manager):
         prompt = MEMORY_UPDATE_PROMPT.format(reading_text=reading_text)
-        resp = self.model.generate_content(prompt)
+        # Use Low Temp Model
+        resp = self.extraction_model.generate_content(prompt)
         try:
             # Robust JSON extraction using regex
             import re
@@ -54,6 +67,7 @@ class OracleBrain:
                 new_session = {
                     "date": time.strftime("%Y-%m-%d"),
                     "topic": data.get("topic", "Genel"),
+                    "target_name": data.get("target_name"), # New field
                     "key_prediction": data.get("key_prediction", ""),
                     "hook_left": data.get("hook_left", ""),
                     "client_mood": data.get("client_mood", "")
@@ -71,6 +85,7 @@ class OracleBrain:
         The Writer Agent (Nes Shine).
         If feedback is provided, it means a revision is requested.
         """
+        # ... (Main writing logic continues below)
         prompt = f"""
         {NES_SHINE_CORE_INSTRUCTIONS}
         
@@ -98,6 +113,7 @@ class OracleBrain:
             Lütfen yukarıdaki eleştirileri dikkate alarak metni YENİDEN YAZ.
             """
             
+        # Use Standard (High Temp) Model for Writing
         response = self.model.generate_content(prompt)
         return response.text
 
@@ -106,6 +122,7 @@ class OracleBrain:
         The QC Agent. Checks quality.
         Returns (bool, string) -> (IS_APPROVED, FEEDBACK)
         """
+        # ... (QC logic)
         prompt = f"""
         {GRANDMASTER_QC_PROMPT}
         
@@ -120,7 +137,8 @@ class OracleBrain:
         {order_note}
         """
         
-        response = self.model.generate_content(prompt)
+        # Use Low Temp Model for QC (Better Logic, Less Hallucination)
+        response = self.extraction_model.generate_content(prompt)
         feedback = response.text.strip()
         
         if "APPROVED" in feedback:
@@ -204,7 +222,8 @@ class OracleBrain:
                 client_name=client_name,
                 reading_topic=reading_topic
             )
-            response = self.model.generate_content(prompt)
+            # Use Low Temp Model
+            response = self.extraction_model.generate_content(prompt)
             return response.text.strip()
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
