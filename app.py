@@ -295,6 +295,11 @@ with st.sidebar:
             else:
                 st.caption("🆕 NEW CLIENT RECORD will be created.")
 
+            else:
+                st.caption("🆕 NEW CLIENT RECORD will be created.")
+
+        uploaded_pdfs = st.file_uploader("Upload Reading PDF(s)", type=["pdf"], key="import_pdf", accept_multiple_files=True)
+
         if uploaded_pdfs:
             st.markdown(f"**📂 {len(uploaded_pdfs)} Files Selected:**")
             for f in uploaded_pdfs:
