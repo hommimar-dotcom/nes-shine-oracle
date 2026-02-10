@@ -5,8 +5,12 @@ import time
 from agents import OracleBrain
 from utils import create_pdf
 from prompts import HTML_TEMPLATE_START, HTML_TEMPLATE_END
+from memory import MemoryManager # Explicit import
 import google.generativeai as genai
 import pandas as pd
+
+# INIT MEMORY MANAGER (GLOBAL)
+mem_mgr = MemoryManager()
 
 # SET PAGE CONFIG
 st.set_page_config(
