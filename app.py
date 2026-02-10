@@ -299,6 +299,8 @@ with st.sidebar:
         
         # Button is ALWAYS enabled to give feedback
         if st.button("🔮 ANALYZE & IMPORT", key="analyze_import"):
+            import_email = import_email.strip()  # Clean input
+            
             if not api_key:
                 st.error("⚠️ Lütfen önce sol menüden API Access Key giriniz.")
             elif not import_email or not uploaded_pdfs:
@@ -317,9 +319,11 @@ with st.sidebar:
                     
                     with st.spinner(f"AI okuyor: {pdf_file.name}..."):
                         success, result = mem_mgr.analyze_pdf_and_create_client(import_email, pdf_file, api_key)
+                        time.sleep(2)  # Wait for DB consistency
                     
                     if success:
                         success_count += 1
+                        st.toast(f"✅ {pdf_file.name} eklendi.", icon="💾")
                     else:
                         fail_count += 1
                         st.error(f"Hata ({pdf_file.name}): {result}")
