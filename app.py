@@ -295,10 +295,13 @@ with st.sidebar:
             else:
                 st.caption("🆕 NEW CLIENT RECORD will be created.")
 
-        uploaded_pdfs = st.file_uploader("Upload Reading PDF(s)", type=["pdf"], key="import_pdf", accept_multiple_files=True)
-        
+        if uploaded_pdfs:
+            st.markdown(f"**📂 {len(uploaded_pdfs)} Files Selected:**")
+            for f in uploaded_pdfs:
+                st.caption(f"- {f.name} ({f.size // 1024} KB)")
+
         # Button is ALWAYS enabled to give feedback
-        if st.button("🔮 ANALYZE & IMPORT", key="analyze_import"):
+        if st.button("🔮 ANALYZE & IMPORT", key="analyze_import", use_container_width=True):
             import_email = import_email.strip()  # Clean input
             
             if not api_key:
