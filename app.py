@@ -9,8 +9,12 @@ from memory import MemoryManager # Explicit import
 import google.generativeai as genai
 import pandas as pd
 
-# INIT MEMORY MANAGER (GLOBAL)
-mem_mgr = MemoryManager()
+# INIT MEMORY MANAGER (GLOBAL WITH CACHE)
+@st.cache_resource
+def get_memory_manager():
+    return MemoryManager()
+
+mem_mgr = get_memory_manager()
 
 # SET PAGE CONFIG
 st.set_page_config(
@@ -261,7 +265,7 @@ with st.sidebar:
     st.markdown("---")
     
 # MAIN INTERFACE
-st.title("NES SHINE // ORACLE ENGINE v3.1")
+st.title("NES SHINE // ORACLE ENGINE v3.2")
 st.markdown("---")
 
 # TABS FOR SINGLE VS BATCH
@@ -513,6 +517,12 @@ with tab2:
 # TAB 3: CLIENT VAULT (DB & TOOLS)
 with tab3:
     st.subheader("🗄️ CLIENT VAULT & TOOLS")
+    st.caption("DEBUG: Using MemoryManager v3.2")
+    
+    # DEFENSIVE INIT: Ensure mem_mgr exists locally if global failed
+    if 'mem_mgr' not in locals() and 'mem_mgr' not in globals():
+        from memory import MemoryManager
+        mem_mgr = MemoryManager()
     
     col_v1, col_v2 = st.columns([1, 1], gap="large")
     

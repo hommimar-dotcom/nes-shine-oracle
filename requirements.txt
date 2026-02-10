@@ -5,3 +5,5 @@ nest_asyncio
 PyPDF2
 sendgrid
 supabase
+
+# Force Rebuild Check
