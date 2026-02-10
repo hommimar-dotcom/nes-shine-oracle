@@ -224,7 +224,18 @@ class MemoryManager:
             return False, "PDF'den metin çıkarılamadı."
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3-pro-preview")
+        
+        # Low Temp Config for Factual Extraction
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.1,
+            top_p=0.95,
+            top_k=64,
+        )
+        
+        model = genai.GenerativeModel(
+            "gemini-3-pro-preview",
+            generation_config=generation_config
+        )
         
         analysis_prompt = f"""
         Aşağıdaki psişik okuma metnini ve dosya ismini analiz et. Şu bilgileri JSON formatında döndür:
