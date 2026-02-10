@@ -261,7 +261,7 @@ with st.sidebar:
     st.markdown("---")
     
 # MAIN INTERFACE
-st.title("NES SHINE // ORACLE ENGINE")
+st.title("NES SHINE // ORACLE ENGINE v3.1")
 st.markdown("---")
 
 # TABS FOR SINGLE VS BATCH
