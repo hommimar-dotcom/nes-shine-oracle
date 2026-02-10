@@ -113,6 +113,7 @@ class MemoryManager:
         for idx, session in enumerate(recent_history):
             context += f"\n--- SEANS {idx+1} ({session.get('date', 'Tarih Yok')}) ---\n"
             context += f"Konu: {session.get('topic', 'Belirtilmedi')}\n"
+            context += f"Odaklanılan Kişi (Target): {session.get('target_name', 'Yok')}\n"
             context += f"Verilen Temel Tavsiye/Kehanet: {session.get('key_prediction', '')}\n"
             context += f"Bırakılan Hook (Kanca): {session.get('hook_left', '')}\n"
             context += f"Müşterinin Ruh Hali: {session.get('client_mood', '')}\n"
@@ -186,7 +187,7 @@ class MemoryManager:
         return False
 
     # ==================== CREATE ====================
-    def create_client(self, client_name, topic, key_prediction, hook_left, client_mood, date=None):
+    def create_client(self, client_name, topic, key_prediction, hook_left, client_mood, target_name=None, date=None):
         if date is None:
             date = datetime.datetime.now().strftime("%Y-%m-%d")
         
@@ -195,6 +196,7 @@ class MemoryManager:
         new_session = {
             "date": date,
             "topic": topic,
+            "target_name": target_name, # Added field
             "key_prediction": key_prediction,
             "hook_left": hook_left,
             "client_mood": client_mood
@@ -224,21 +226,24 @@ class MemoryManager:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-3-pro-preview")
         
-        analysis_prompt = """
-        Aşağıdaki psişik okuma metnini analiz et ve şu bilgileri JSON formatında döndür:
+        analysis_prompt = f"""
+        Aşağıdaki psişik okuma metnini ve dosya ismini analiz et. Şu bilgileri JSON formatında döndür:
         
-        {
-            "topic": "Okumanın ana konusu (örn: Love & Relationship, Career, Spiritual Growth)",
-            "key_prediction": "Okumada verilen en önemli kehanet veya tavsiye (1-2 cümle)",
-            "hook_left": "Gelecek için bırakılan merak uyandırıcı ipucu/kanca (varsa)",
-            "client_mood": "Müşterinin ruh hali (Hopeful, Anxious, Sad, Confused, Excited, Neutral)",
-            "client_name": "Metinde geçen müşteri adı (varsa)"
-        }
+        DOSYA İSMİ İPUCU: "{pdf_file.name}" (Müşteri ismi burada yazıyor olabilir)
         
-        Sadece JSON döndür, başka bir şey yazma.
+        {{
+            "topic": "Okumanın ana konusu (örn: Love & Relationship, Career)",
+            "key_prediction": "Okumada verilen en önemli kehanet (1-2 cümle)",
+            "hook_left": "Gelecek için bırakılan merak uyandırıcı ipucu (varsa)",
+            "client_mood": "Müşterinin ruh hali",
+            "client_name": "Müşterinin adı (Dosya isminden veya metindeki 'Dear X' hitabından çıkar)",
+            "target_name": "Soru sorulan veya odaklanılan diğer kişi (örn: Partner, Ex, İlgi duyulan kişi). Yoksa null döndür."
+        }}
+        
+        Sadece JSON döndür.
         
         OKUMA METNİ:
-        """ + text[:8000]
+        """ + text[:12000] # Increased context window slightly
         
         try:
             response = model.generate_content(analysis_prompt)
@@ -249,18 +254,26 @@ class MemoryManager:
             elif "```" in result_text:
                 result_text = result_text.split("```")[1].split("```")[0]
             
-            analysis = json.loads(result_text)
+            # Parse JSON
+            # import json # This import is already at the top of the file or implicitly available
+            data = json.loads(result_text)
             
+            extracted_name = data.get("client_name") or "Unknown_Client"
+            # Fallback if name is still generic
+            if "Unknown" in extracted_name:
+                extracted_name = pdf_file.name.split('_')[0]
+                
+            # Create Memory
             self.create_client(
-                client_name=client_email,
-                topic=analysis.get("topic", "Unknown"),
-                key_prediction=analysis.get("key_prediction", ""),
-                hook_left=analysis.get("hook_left", ""),
-                client_mood=analysis.get("client_mood", "Neutral"),
-                date=datetime.datetime.now().strftime("%Y-%m-%d")
+                client_name=extracted_name,
+                topic=data.get("topic", "General Reading"),
+                key_prediction=data.get("key_prediction", ""),
+                hook_left=data.get("hook_left", ""),
+                client_mood=data.get("client_mood", "Neutral"),
+                target_name=data.get("target_name") # Pass target name
             )
             
-            return True, analysis
+            return True, "Başarılı"
             
         except Exception as e:
-            return False, f"AI analiz hatası: {str(e)}"
+            return False, f"AI Analiz Hatası: {str(e)}"

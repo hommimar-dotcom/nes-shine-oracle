@@ -137,16 +137,34 @@ class OracleBrain:
         from memory import MemoryManager
         mem_mgr = MemoryManager()
         
-        # 1. IDENTIFY CLIENT NAME (for display/filename only)
-        if progress_callback: progress_callback("Nes Shine: Müşteri Kimliği Taranıyor...")
-        client_name = self.identify_client(order_note)
-        if progress_callback: progress_callback(f"Müşteri Tanımlandı: {client_name}")
-        
         # 2. DETERMINE MEMORY KEY (Use Email if provided, otherwise fallback to client name)
+        # Note: If email provided, we load memory first to see if we already know the name
+        
+        real_client_name = None
+        memory_data = {}
+        
+        if client_email:
+            memory_key = client_email
+            memory_data = mem_mgr.load_memory(memory_key)
+            if memory_data and memory_data.get("client_name") and "Unknown" not in memory_data["client_name"]:
+                real_client_name = memory_data["client_name"]
+        
+        # 1. IDENTIFY CLIENT NAME (If not found in memory)
+        if not real_client_name:
+            if progress_callback: progress_callback("Nes Shine: Müşteri Kimliği Taranıyor...")
+            extracted_name = self.identify_client(order_note)
+            real_client_name = extracted_name
+        
+        if progress_callback: progress_callback(f"Müşteri Tanımlandı: {real_client_name}")
+        
+        # Final Name Assignment
+        client_name = real_client_name
         memory_key = client_email if client_email else client_name
         
-        # 3. LOAD MEMORY
-        memory_data = mem_mgr.load_memory(memory_key)
+        # 3. LOAD MEMORY (If not already loaded)
+        if not memory_data:
+            memory_data = mem_mgr.load_memory(memory_key)
+            
         memory_context = mem_mgr.format_context_for_prompt(memory_data)
         
         if progress_callback: progress_callback("Akashic Records (Hafıza) Yüklendi...")
@@ -190,4 +208,3 @@ class OracleBrain:
             return response.text.strip()
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
-
