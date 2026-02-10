@@ -6,6 +6,7 @@ from agents import OracleBrain
 from utils import create_pdf
 from prompts import HTML_TEMPLATE_START, HTML_TEMPLATE_END
 import google.generativeai as genai
+import pandas as pd
 
 # SET PAGE CONFIG
 st.set_page_config(
@@ -166,7 +167,7 @@ st.markdown("""
     /* REMOVE DEFAULT STREAMLIT DECORATION */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    /* header {visibility: hidden;}  <-- REMOVED TO SHOW SIDEBAR TOGGLE */
+    /* header {visibility: hidden;} */
     
     /* MOBILE RESPONSIVE */
     @media (max-width: 768px) {
@@ -498,112 +499,121 @@ with tab2:
     
     st.subheader("BATCH QUEUE MANAGER")
     
-    # Stats Display
-    col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-    with col_s1:
-        st.metric("PENDING", stats["pending"])
-    with col_s2:
-        st.metric("PROCESSING", stats["processing"])
-    with col_s3:
-        st.metric("COMPLETED", stats["completed"])
-    with col_s4:
-        st.metric("FAILED", stats["failed"])
+    # SYSTEM METRICS ROW
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("PENDING", stats["pending"])
+    m2.metric("PROCESSING", stats["processing"])
+    m3.metric("COMPLETED", stats["completed"])
+    m4.metric("FAILED", stats["failed"])
     
     st.markdown("---")
-    
-    # Add to Queue Form
-    with st.expander("ADD TO QUEUE", expanded=True):
-        q_email = st.text_input("Client Email", key="q_email")
-        q_note = st.text_area("Order Note", height=150, key="q_note")
-        q_topic = st.text_input("Reading Topic", key="q_topic")
-        q_length = st.selectbox("Depth", ["8000", "12000"], key="q_length")
-        
-        if st.button("ADD TO QUEUE"):
-            if q_email and q_note and q_topic:
-                queue_id = queue_mgr.add_to_queue(q_email, q_note, q_topic, q_length)
-                st.success(f"✅ Added to queue (ID: {queue_id})")
-                st.rerun()
-            else:
-                st.warning("Please fill all fields")
-    
-    # Pending Items List
-    pending_items = queue_mgr.get_queue()
-    if pending_items:
-        st.markdown("### ⏳ PENDING QUEUE")
-        for p_item in pending_items:
-            with st.expander(f"WAITING: {p_item['client_email']} - {p_item['reading_topic'][:30]}...", expanded=True):
-                st.write(p_item['order_note'])
-                st.caption(f"Added: {p_item['added_at']}")
 
-    # Process Queue Button
-    st.markdown("---")
-    if st.button("🚀 PROCESS QUEUE", disabled=not api_key):
-        queue_items = queue_mgr.get_queue()
+    # 1. COMPLETED ITEMS (TOP PRIORITY)
+    completed_items = queue_mgr.get_completed(limit=50)
+    if completed_items:
+        st.success(f"✅ READY FOR DOWNLOAD ({len(completed_items)})")
         
-        if not queue_items:
-            st.info("Queue is empty")
-        else:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            for idx, item in enumerate(queue_items):
-                status_text.markdown(f"**Processing {idx+1}/{len(queue_items)}:** {item['client_email']}")
-                queue_mgr.mark_processing(item["id"])
-                
-                try:
-                    brain = OracleBrain(api_key)
-                    # Fixed: Unpacking tuple return locally
-                    raw_text, delivery_msg = brain.run_cycle(
-                        item["order_note"],
-                        item["reading_topic"],
-                        client_email=item["client_email"],
-                        target_length=item["target_length"]
-                    )
-                    
-                    # Format HTML
-                    if "<!DOCTYPE html>" not in raw_text:
-                        final_content = raw_text.replace("```html", "").replace("```", "")
-                        full_html = HTML_TEMPLATE_START + final_content + HTML_TEMPLATE_END
-                    else:
-                        full_html = raw_text.replace("```html", "").replace("```", "")
-                    
-                    # Generate PDF
-                    safe_client = "".join(x for x in brain.last_client_name if x.isalnum()) if hasattr(brain, 'last_client_name') else "Client"
-                    safe_topic = "".join(x for x in item["reading_topic"] if x.isalnum())[:15]
-                    pdf_filename = f"NesShine_{safe_client}_{safe_topic}_{int(time.time())}.pdf"
-                    pdf_path = create_pdf(full_html, pdf_filename)
-                    
-                    queue_mgr.mark_completed(item["id"], pdf_path, delivery_msg)
-                    
-                except Exception as e:
-                    queue_mgr.mark_failed(item["id"], str(e))
-                
-                progress_bar.progress((idx + 1) / len(queue_items))
-            
-            status_text.markdown("**✅ Queue processing complete!**")
+        # Clear History Button
+        if st.button("🗑️ CLEAR HISTORY", key="clear_hist", help="Remove completed/failed items from view"):
+            queue_mgr.clear_history()
             st.rerun()
-    
-    # Completed Items
-    st.markdown("---")
-    st.markdown("### COMPLETED READINGS")
-    completed = queue_mgr.get_completed(limit=10)
-    
-    if completed:
-        for item in reversed(completed):
-            with st.expander(f"📄 {item['client_email']} - {item['reading_topic'][:30]}..."):
-                st.caption(f"Completed: {item['completed_at'][:16]}")
-                # Delivery msg display
-                if item.get("delivery_msg"):
-                    st.code(item["delivery_msg"], language=None)
-                
+            
+        for item in reversed(completed_items):
+            c1, c2, c3 = st.columns([2, 4, 2])
+            with c1:
+                st.caption(item['completed_at'][:16])
+                st.write(f"**{item['client_email']}**")
+            with c2:
+                st.caption("Topic")
+                st.write(item['reading_topic'][:50])
+            with c3:
+                # Download Button
                 if item.get("pdf_path") and os.path.exists(item["pdf_path"]):
                     with open(item["pdf_path"], "rb") as pdf_file:
                         st.download_button(
-                            label="DOWNLOAD PDF",
+                            label="📥 DOWNLOAD PDF",
                             data=pdf_file,
                             file_name=os.path.basename(item["pdf_path"]),
                             mime="application/pdf",
-                            key=f"download_{item['id']}"
+                            key=f"dl_{item['id']}",
+                            use_container_width=True
                         )
-    else:
-        st.caption("No completed readings yet")
+                elif item.get("status") == "failed":
+                    st.error(f"FAILED: {item.get('error')}")
+            st.divider()
+    
+    # 2. ACTIVE QUEUE (PENDING)
+    st.markdown("### ⏳ ACTIVE QUEUE")
+    
+    col_q1, col_q2 = st.columns([2, 1], gap="large")
+    
+    with col_q1:
+        pending_items = queue_mgr.get_queue()
+        
+        if pending_items:
+            # Display as a dataframe for cleanliness
+            df = pd.DataFrame(pending_items)
+            df_display = df[['client_email', 'reading_topic', 'added_at', 'status']]
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("🚀 PROCESS ALL PENDING ITEMS", type="primary", use_container_width=True, disabled=not api_key):
+                
+                progress_bar = st.progress(0)
+                status_box = st.info("Starting Batch Process...")
+                
+                for idx, item in enumerate(pending_items):
+                    status_box.info(f"🔮 Processing {idx+1}/{len(pending_items)}: {item['client_email']}...")
+                    queue_mgr.mark_processing(item["id"])
+                    
+                    try:
+                        brain = OracleBrain(api_key)
+                        raw_text, delivery_msg = brain.run_cycle(
+                            item["order_note"],
+                            item["reading_topic"],
+                            client_email=item["client_email"],
+                            target_length=item["target_length"]
+                        )
+                        
+                        # Generate PDF
+                        if "<!DOCTYPE html>" not in raw_text:
+                            final_content = raw_text.replace("```html", "").replace("```", "")
+                            full_html = HTML_TEMPLATE_START + final_content + HTML_TEMPLATE_END
+                        else:
+                            full_html = raw_text.replace("```html", "").replace("```", "")
+                        
+                        safe_client = "".join(x for x in brain.last_client_name if x.isalnum()) if hasattr(brain, 'last_client_name') else "Client"
+                        safe_topic = "".join(x for x in item["reading_topic"] if x.isalnum())[:15]
+                        pdf_filename = f"NesShine_{safe_client}_{safe_topic}_{int(time.time())}.pdf"
+                        pdf_path = create_pdf(full_html, pdf_filename)
+                        
+                        queue_mgr.mark_completed(item["id"], pdf_path, delivery_msg)
+                        
+                    except Exception as e:
+                        queue_mgr.mark_failed(item["id"], str(e))
+                    
+                    progress_bar.progress((idx + 1) / len(pending_items))
+                
+                status_box.success("✅ Batch Process Complete!")
+                time.sleep(1)
+                st.rerun()
+        else:
+            st.info("Queue is empty. Add items using the form on the right.")
+
+    # 3. ADD TO QUEUE FORM (RIGHT SIDE)
+    with col_q2:
+        st.markdown("#### ➕ ADD NEW ITEM")
+        with st.form("add_queue_form"):
+            q_email = st.text_input("Client Email", placeholder="client@email.com")
+            q_topic = st.text_input("Topic", placeholder="Love, Career...")
+            q_note = st.text_area("Notes", placeholder="Context...", height=100)
+            q_length = st.selectbox("Depth", ["8000", "12000"])
+            
+            if st.form_submit_button("ADD TO QUEUE", use_container_width=True):
+                if q_email and q_topic:
+                    queue_mgr.add_to_queue(q_email, q_note, q_topic, q_length)
+                    st.success("Added!")
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    st.warning("Email & Topic required")

@@ -220,3 +220,24 @@ class QueueManager:
             "completed": completed,
             "failed": failed
         }
+
+    def clear_history(self):
+        """Clears completed and failed items."""
+        if self.use_db:
+            try:
+                self.supabase.table("reading_queue").delete().in_("status", ["completed", "failed"]).execute()
+                return True
+            except:
+                return False
+        
+        # Local file
+        with open(self.queue_file, 'r') as f:
+            data = json.load(f)
+        
+        data["completed"] = []
+        # Also remove failed from queue list if any
+        data["queue"] = [item for item in data["queue"] if item["status"] in ["pending", "processing"]]
+        
+        with open(self.queue_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        return True
