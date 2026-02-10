@@ -283,29 +283,57 @@ with st.sidebar:
     
     # Create/Import client via PDF
     with st.expander("➕ IMPORT CLIENT (PDF)", expanded=False):
-        st.caption("Upload a past reading PDF. AI will analyze and extract all details automatically.")
+        st.caption("Upload past reading PDFs. AI will analyze and extract all details automatically.")
         
         import_email = st.text_input("Client Email", key="import_email", placeholder="e.g. jessica@gmail.com")
-        uploaded_pdf = st.file_uploader("Upload Reading PDF", type=["pdf"], key="import_pdf")
+        
+        # Immediate Client Check
+        if import_email:
+            existing = mem_mgr.load_memory(import_email)
+            if existing and existing.get("sessions"):
+                st.caption(f"✅ CLIENT FOUND: {len(existing['sessions'])} previous sessions on record.")
+            else:
+                st.caption("🆕 NEW CLIENT RECORD will be created.")
+
+        uploaded_pdfs = st.file_uploader("Upload Reading PDF(s)", type=["pdf"], key="import_pdf", accept_multiple_files=True)
         
         # Button is ALWAYS enabled to give feedback
         if st.button("🔮 ANALYZE & IMPORT", key="analyze_import"):
             if not api_key:
                 st.error("⚠️ Lütfen önce sol menüden API Access Key giriniz.")
-            elif not import_email or not uploaded_pdf:
-                st.warning("⚠️ Email ve PDF dosyası gereklidir.")
+            elif not import_email or not uploaded_pdfs:
+                st.warning("⚠️ Email ve en az bir PDF dosyası gereklidir.")
             else:
                 st.toast("Analiz başlatılıyor... lütfen bekleyin.", icon="⏳")
-                with st.spinner("AI PDF'i okuyor ve analiz ediyor..."):
-                    success, result = mem_mgr.analyze_pdf_and_create_client(import_email, uploaded_pdf, api_key)
+                
+                success_count = 0
+                fail_count = 0
+                
+                progress_text = st.empty()
+                progress_bar = st.progress(0)
+                
+                for idx, pdf_file in enumerate(uploaded_pdfs):
+                    progress_text.text(f"Analiz ediliyor: {pdf_file.name} ({idx+1}/{len(uploaded_pdfs)})")
                     
-                if success:
-                    st.success(f"✅ İŞLEM BAŞARILI! Müşteri '{import_email}' hafızaya eklendi.")
-                    st.json(result)
+                    with st.spinner(f"AI okuyor: {pdf_file.name}..."):
+                        success, result = mem_mgr.analyze_pdf_and_create_client(import_email, pdf_file, api_key)
+                    
+                    if success:
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                        st.error(f"Hata ({pdf_file.name}): {result}")
+                    
+                    progress_bar.progress((idx + 1) / len(uploaded_pdfs))
+                
+                if success_count > 0:
+                    st.success(f"✅ İŞLEM TAMAMLANDI! {success_count} dosya hafızaya eklendi.")
+                    if fail_count > 0:
+                        st.warning(f"{fail_count} dosya işlenemedi.")
                     time.sleep(2)
                     st.rerun()
                 else:
-                    st.error(f"HATA: {result}")
+                    st.error("Hiçbir dosya işlenemedi.")
 
     st.markdown("---")
     st.caption("NES SHINE // ENGINE V3.0")
