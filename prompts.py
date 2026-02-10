@@ -216,6 +216,7 @@ Sonraki okumada "çelişki yaratmamak" için neleri hatırlamamız şart?
 Şu formatta JSON döndür (MD blokları olmadan, saf JSON):
 {{
     "topic": "Okumanın ana konusu",
+    "target_name": "Okumada odaklanılan diğer kişiler (Virgülle ayır). Yoksa null.",
     "key_prediction": "Müşteriye verdiğin en büyük kehalet veya söz neydi?",
     "hook_left": "Bir sonraki seans için merak uyandırmak adına ne söyledin?",
     "client_mood": "Müşterinin enerjisi nasıldı? (Üzgün, Umutlu, Bloke vb.)"
