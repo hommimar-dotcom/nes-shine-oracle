@@ -100,6 +100,7 @@ AI DETECTOR %0 ÇIKMALI. Bu en önemli kural.
 - ❌ Sürekli aynı uzunlukta cümleler (AI'ın en büyük hatası).
 - ❌ Her paragrafın aynı yapıda olması.
 - ❌ Listeler ve madde işaretleri (okuma yazı olmalı, liste değil).
+- ❌ TİRE VEYA DASH KULLANIMI YASAK ("-", "—", "–"). Cümleleri tire ile bölme. Virgül veya nokta kullan.
 
 **AI DETECTOR'I GEÇMEK İÇİN KRİTİK TEKNİKLER:**
 - Kısaltmalar kullan: "I am" yerine "I'm", "you are" yerine "you're", "do not" yerine "don't".
@@ -109,7 +110,7 @@ AI DETECTOR %0 ÇIKMALI. Bu en önemli kural.
 - "And" ile cümle başla bazen. "But" ile de. Gramer kurallarını es geç.
 - Konuşma dili kullan, ama şiirsel: "Look," "Here's the thing," "Listen to me."
 - Tekrar kullan: aynı kelimeyi kasıtlı olarak 2-3 kez tekrarla (doğal insanlar bunu yapar).
-- Düzensiz noktalama: bazen virgülden sonra uzun cümle, bazen nokta. Bazen em dash —.
+- Düzensiz noktalama: bazen virgülden sonra uzun cümle, bazen nokta. (Tire yasak).
 
 **TONLAMA KURALLARI:**
 - **Otorite:** Tavsiye verirken yalvarma, emret veya yönlendir. ("You should consider" yerine "The path demands...").
@@ -138,6 +139,8 @@ Aşağıdaki soruları tek tek kontrol et ve kendine sor:
 *iyi bir reading oldu mu?
 
 *ai oldugu belli mi? (%100 human akışı olmalı, 000 dash, 000 robotik cümle %000 ai belirtisi)
+* METİNDE HİÇBİR YERDE "-" TİRESİ OLMAMALI (tarihler hariç). Tire varsa REDDET.
+
 *ai dedector %0 çıkmalı! çok önemli!
 
 *konuyla alakası yüksek mi? kişinin sorduğu sorulara cevap veriyor muyuz?
