@@ -125,7 +125,7 @@ class OracleBrain:
             """
             
         # Use Standard (High Temp) Model for Writing
-        response = self.model.generate_content(prompt)
+        response = self.model.generate_content(prompt, request_options={'timeout': 1200})
         return response.text
 
     def grandmaster_agent(self, draft_text, order_note, target_length):
@@ -149,7 +149,7 @@ class OracleBrain:
         """
         
         # Use Low Temp Model for QC (Better Logic, Less Hallucination)
-        response = self.extraction_model.generate_content(prompt)
+        response = self.extraction_model.generate_content(prompt, request_options={'timeout': 1200})
         feedback = response.text.strip()
         
         if "APPROVED" in feedback:
