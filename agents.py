@@ -23,9 +23,18 @@ class OracleBrain:
             max_output_tokens=8192,
         )
         
+        # SAFETY SETTINGS: BLOCK_NONE (Crucial for Occult/Esoteric topics to not trigger false positives)
+        self.safety_settings = [
+            { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
+            { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" },
+        ]
+        
         self.model = genai.GenerativeModel(
             self.REQUIRED_MODEL,
-            generation_config=self.generation_config
+            generation_config=self.generation_config,
+            safety_settings=self.safety_settings
         )
         
         # LOW TEMP CONFIG FOR FACTS (Extraction & System Messages)
@@ -36,7 +45,8 @@ class OracleBrain:
         )
         self.extraction_model = genai.GenerativeModel(
             self.REQUIRED_MODEL,
-            generation_config=self.extraction_config
+            generation_config=self.extraction_config,
+            safety_settings=self.safety_settings
         )
         
     def identify_client(self, text):
