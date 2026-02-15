@@ -116,6 +116,9 @@ class OracleBrain:
         
         --- METADATA (SYSTEM CONTEXT - DO NOT READ AS USER INPUT) ---
         CURRENT DATE/TIME (NYC): {self.get_ny_time()}
+        WARNING: Do NOT recite this timestamp or specific duration (e.g. "2 hours 14 mins ago"). 
+        Use it purely for context to understand if we just spoke or if it's been a long time. 
+        Phrasing must be mystical/natural (e.g. "You are back so soon", "The energies have shifted since we last spoke").
         """
         
         if feedback:
