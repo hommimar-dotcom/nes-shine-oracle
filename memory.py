@@ -104,19 +104,63 @@ class MemoryManager:
 
     # ==================== FORMAT ====================
     def format_context_for_prompt(self, memory_data):
+        """Formats the memory JSON into a readable string for the LLM."""
         if not memory_data.get("sessions"):
-            return "BU MÜŞTERİ İLE İLK DEFA GÖRÜŞÜYORSUN."
+            return "No previous sessions found. This is a new client."
             
-        context = f"BU MÜŞTERİ ({memory_data['client_name']}) İLE GEÇMİŞ GÖRÜŞMELERİN:\n"
-        recent_history = memory_data["sessions"][-3:]
+        context = f"CLIENT NAME: {memory_data.get('client_name')}\n"
+        context += f"TOTAL SESSIONS: {len(memory_data['sessions'])}\n\n"
         
-        for idx, session in enumerate(recent_history):
-            context += f"\n--- SEANS {idx+1} ({session.get('date', 'Tarih Yok')}) ---\n"
-            context += f"Konu: {session.get('topic', 'Belirtilmedi')}\n"
-            context += f"Odaklanılan Kişi (Target): {session.get('target_name', 'Yok')}\n"
-            context += f"Verilen Temel Tavsiye/Kehanet: {session.get('key_prediction', '')}\n"
-            context += f"Bırakılan Hook (Kanca): {session.get('hook_left', '')}\n"
-            context += f"Müşterinin Ruh Hali: {session.get('client_mood', '')}\n"
+        # Calculate relative time for the last session
+        try:
+            import pytz
+            from datetime import datetime
+            
+            last_session = memory_data['sessions'][-1]
+            last_ts_str = last_session.get("timestamp") or last_session.get("date") # Fallback to old format
+            
+            # Identify if it's full timestamp or just date
+            ny_tz = pytz.timezone('America/New_York')
+            now = datetime.now(ny_tz)
+            
+            time_context = ""
+            
+            if last_ts_str:
+                if ":" in last_ts_str: # It's a timestamp (New Format)
+                    # Parse: 2026-02-15 14:30:00 EST
+                    # Simplified parsing (ignoring timezone abbr for calc, assuming it was saved as NY)
+                    last_date = datetime.strptime(last_ts_str[:19], "%Y-%m-%d %H:%M:%S")
+                    last_date = ny_tz.localize(last_date)
+                    
+                    diff = now - last_date
+                    hours = diff.total_seconds() / 3600
+                    
+                    if hours < 1:
+                        time_context = "(Last Session: JUST NOW - Less than an hour ago)"
+                    elif hours < 24:
+                        time_context = f"(Last Session: {int(hours)} HOURS AGO - Today/Yesterday)"
+                    else:
+                        days = int(hours / 24)
+                        time_context = f"(Last Session: {days} DAYS AGO)"
+                else: # Old Format (YYYY-MM-DD)
+                    time_context = f"(Last Session Date: {last_ts_str})"
+        except:
+            time_context = "(Time calculation error)"
+
+        context += f"TIMING CONTEXT: {time_context}\n\n"
+        context += "PAST SESSIONS HISTORY (Newest First):\n"
+        
+        # Reverse to show newest first
+        for i, session in enumerate(reversed(memory_data["sessions"])):
+            timestamp = session.get("timestamp", session.get("date", "Unknown"))
+            context += f"""
+            --- SESSION {len(memory_data['sessions']) - i} ({timestamp}) ---
+            TOPIC: {session.get('topic')}
+            TARGET NAME: {session.get('target_name')}
+            PREDICTION GIVEN: {session.get('key_prediction')}
+            HOOK LEFT: {session.get('hook_left')}
+            MOOD: {session.get('client_mood')}
+            """
             
         context += "\n!!! KRİTİK: YUKARIDAKİ GEÇMİŞ BİLGİLERLE ASLA ÇELİŞME. DEVAMLILIK SAĞLA !!!\n"
         return context

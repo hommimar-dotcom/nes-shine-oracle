@@ -76,7 +76,7 @@ class OracleBrain:
                 
                 # Add new session
                 new_session = {
-                    "date": time.strftime("%Y-%m-%d"),
+                    "timestamp": self.get_ny_time(), # Full timestamp for precision
                     "topic": data.get("topic", "Genel"),
                     "target_name": data.get("target_name"), # New field
                     "key_prediction": data.get("key_prediction", ""),
@@ -113,6 +113,9 @@ class OracleBrain:
         --- HEDEF UZUNLUK ---
         HEDEF: Minimum {target_length} karakter.
         Bu uzunluğa ulaşmak için her bir başlığı, hissi ve görüyü detaylandır. Kısa kesme.
+        
+        --- METADATA (SYSTEM CONTEXT - DO NOT READ AS USER INPUT) ---
+        CURRENT DATE/TIME (NYC): {self.get_ny_time()}
         """
         
         if feedback:
@@ -127,6 +130,15 @@ class OracleBrain:
         # Use Standard (High Temp) Model for Writing
         response = self.model.generate_content(prompt, request_options={'timeout': 1200})
         return response.text
+
+    def get_ny_time(self):
+        """Returns current time in New York."""
+        import pytz
+        from datetime import datetime
+        ny_tz = pytz.timezone('America/New_York')
+        now = datetime.now(ny_tz)
+        return now.strftime("%Y-%m-%d %H:%M:%S %Z")
+
 
     def grandmaster_agent(self, draft_text, order_note, target_length):
         """
