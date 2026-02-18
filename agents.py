@@ -74,14 +74,15 @@ class OracleBrain:
                 # Load current memory
                 mem = memory_manager.load_memory(client_name)
                 
-                # Add new session
+                # Add new session — INCLUDING FULL READING TEXT
                 new_session = {
                     "timestamp": self.get_ny_time(), # Full timestamp for precision
                     "topic": data.get("topic", "Genel"),
-                    "target_name": data.get("target_name"), # New field
+                    "target_name": data.get("target_name"),
                     "key_prediction": data.get("key_prediction", ""),
                     "hook_left": data.get("hook_left", ""),
-                    "client_mood": data.get("client_mood", "")
+                    "client_mood": data.get("client_mood", ""),
+                    "full_reading": reading_text  # ← FULL READING TEXT SAVED
                 }
                 
                 mem["sessions"].append(new_session)

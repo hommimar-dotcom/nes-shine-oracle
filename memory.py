@@ -153,13 +153,27 @@ class MemoryManager:
         # Reverse to show newest first
         for i, session in enumerate(reversed(memory_data["sessions"])):
             timestamp = session.get("timestamp", session.get("date", "Unknown"))
+            
+            # Get full reading, truncate to avoid context overflow (3000 chars per session)
+            full_reading = session.get("full_reading", "")
+            if full_reading:
+                # Strip HTML tags for cleaner context
+                import re
+                clean_reading = re.sub(r'<[^>]+>', '', full_reading)
+                clean_reading = clean_reading[:3000] + ("..." if len(clean_reading) > 3000 else "")
+            else:
+                clean_reading = "(Full reading text not available for this session)"
+            
             context += f"""
             --- SESSION {len(memory_data['sessions']) - i} ({timestamp}) ---
             TOPIC: {session.get('topic')}
-            TARGET NAME: {session.get('target_name')}
-            PREDICTION GIVEN: {session.get('key_prediction')}
-            HOOK LEFT: {session.get('hook_left')}
-            MOOD: {session.get('client_mood')}
+            TARGET NAME(S): {session.get('target_name')}
+            KEY PREDICTION GIVEN: {session.get('key_prediction')}
+            HOOK LEFT FOR NEXT SESSION: {session.get('hook_left')}
+            CLIENT MOOD: {session.get('client_mood')}
+            FULL READING CONTENT:
+            {clean_reading}
+            --- END SESSION ---
             """
             
         context += "\n!!! KRİTİK: YUKARIDAKİ GEÇMİŞ BİLGİLERLE ASLA ÇELİŞME. DEVAMLILIK SAĞLA !!!\n"
