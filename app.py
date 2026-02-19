@@ -206,11 +206,75 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ==================== LOGIN GATE ====================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_login = st.columns([1, 2, 1])[1]
+    with col_login:
+        st.markdown("<h1 style='text-align:center; color:#d4af37;'>NES SHINE</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#666;'>Sovereign Engine Access</p>", unsafe_allow_html=True)
+        login_pass = st.text_input("🔑 ACCESS CODE", type="password", placeholder="Enter system password...")
+        if st.button("AUTHENTICATE", use_container_width=True, type="primary"):
+            correct_pass = os.environ.get("APP_PASSWORD", "nesshine2026")
+            if login_pass == correct_pass:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("ACCESS DENIED.")
+    st.stop()
+
+# ==================== API KEY ROTATION ====================
+def get_active_api_key():
+    """Try keys in priority order: KEY_1 → KEY_2 → KEY_3"""
+    keys = [
+        os.environ.get("GEMINI_KEY_1", ""),
+        os.environ.get("GEMINI_KEY_2", ""),
+        os.environ.get("GEMINI_KEY_3", ""),
+    ]
+    # Return first non-empty key
+    for i, key in enumerate(keys):
+        if key.strip():
+            return key.strip(), i + 1
+    return None, 0
+
+def try_api_key_with_fallback():
+    """Try each key, return working key or None."""
+    keys = [
+        os.environ.get("GEMINI_KEY_1", ""),
+        os.environ.get("GEMINI_KEY_2", ""),
+        os.environ.get("GEMINI_KEY_3", ""),
+    ]
+    for i, key in enumerate(keys):
+        if key.strip():
+            try:
+                genai.configure(api_key=key.strip())
+                model = genai.GenerativeModel("gemini-3-pro-preview")
+                model.generate_content("test", request_options={'timeout': 10})
+                return key.strip(), i + 1
+            except Exception:
+                continue
+    return None, 0
+
+api_key, active_key_num = get_active_api_key()
+
 # SIDEBAR: SYSTEM CONFIGURATION
 with st.sidebar:
     st.markdown("## SYSTEM CONFIGURATION")
     
-    api_key = st.text_input("API ACCESS KEY", type="password", help="System requires valid Google Gemini credential.")
+    # Show active API key status
+    if api_key:
+        st.success(f"🔑 API KEY #{active_key_num} ACTIVE")
+    else:
+        st.error("⚠️ NO API KEYS CONFIGURED")
+        st.caption("Set GEMINI_KEY_1, GEMINI_KEY_2, GEMINI_KEY_3 in Railway env vars.")
+    
+    # Logout button
+    if st.button("🚪 LOGOUT", use_container_width=True):
+        st.session_state.authenticated = False
+        st.rerun()
     
     st.markdown("---")
     
