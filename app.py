@@ -303,12 +303,22 @@ with tab1:
             st.session_state.pdf_path = None
         if "delivery_msg" not in st.session_state:
             st.session_state.delivery_msg = None
+        if "last_status" not in st.session_state:
+            st.session_state.last_status = None
+        if "is_generating" not in st.session_state:
+            st.session_state.is_generating = False
+    
+        # Show persisted status on rerun (survives page interactions)
+        if st.session_state.last_status and not generate_btn:
+            st.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
     
         if generate_btn and api_key:
             if not order_note or not reading_topic:
                 st.error("MISSING INPUT PARAMETERS.")
             else:
                 brain = OracleBrain(api_key)
+                st.session_state.is_generating = True
+                st.session_state.last_status = "INITIALIZING..."
                 status_container = st.empty()
                 
                 try:
@@ -316,7 +326,8 @@ with tab1:
                     def update_status(msg):
                         # Clean status updates (No emojis)
                         clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
-                        status_container.markdown(f"**SYSTEM STATUS:** `{clean_msg.strip().upper()}`")
+                        st.session_state.last_status = clean_msg.strip().upper()
+                        status_container.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
                         time.sleep(0.1)
                     
                     raw_text, delivery_msg = brain.run_cycle(order_note, reading_topic, client_email=client_email, target_length=target_len, progress_callback=update_status)
@@ -354,10 +365,14 @@ with tab1:
                     st.session_state.pdf_path = pdf_path
                     
                     update_status("PROTOCOL COMPLETE")
+                    st.session_state.is_generating = False
+                    st.session_state.last_status = None
                     time.sleep(1)
                     status_container.empty()
                     
                 except Exception as e:
+                    st.session_state.is_generating = False
+                    st.session_state.last_status = f"ERROR: {str(e)}"
                     status_container.error(f"SYSTEM FAILURE: {str(e)}")
     
         # DISPLAY RESULTS
