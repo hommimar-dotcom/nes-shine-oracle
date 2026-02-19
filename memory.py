@@ -243,6 +243,45 @@ class MemoryManager:
                 return False
         return False
 
+    # ==================== BULK EXPORT ====================
+    def export_all_clients(self):
+        """Export ALL client data as a single JSON-serializable dict."""
+        all_data = {}
+        clients = self.list_all_clients()
+        for client in clients:
+            client_name = client["client_name"]
+            mem = self.load_memory(client_name)
+            if mem:
+                key = sanitize_filename(client_name)
+                all_data[key] = mem
+        return all_data
+
+    # ==================== BULK IMPORT ====================
+    def import_all_clients(self, backup_data):
+        """Import client data from a backup JSON dict. Merges with existing data."""
+        imported = 0
+        errors = 0
+        for key, client_data in backup_data.items():
+            try:
+                client_name = client_data.get("client_name", key)
+                existing = self.load_memory(client_name)
+                
+                if existing and existing.get("sessions"):
+                    # Merge: add only sessions that don't already exist (by timestamp)
+                    existing_timestamps = {s.get("timestamp", "") for s in existing["sessions"]}
+                    for session in client_data.get("sessions", []):
+                        if session.get("timestamp", "") not in existing_timestamps:
+                            existing["sessions"].append(session)
+                    self.save_memory(client_name, existing)
+                else:
+                    # New client: save directly
+                    self.save_memory(client_name, client_data)
+                imported += 1
+            except Exception as e:
+                print(f"Import error for {key}: {e}")
+                errors += 1
+        return imported, errors
+
     # ==================== CREATE ====================
     def create_client(self, client_name, topic, key_prediction, hook_left, client_mood, target_name=None, date=None):
         if date is None:

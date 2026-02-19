@@ -2,6 +2,7 @@
 import streamlit as st
 import os
 import time
+import json
 from agents import OracleBrain
 from utils import create_pdf
 from prompts import HTML_TEMPLATE_START, HTML_TEMPLATE_END
@@ -657,5 +658,46 @@ with tab3:
              st.caption("SendGrid Integration Required")
              # (Simplified for brevity as logic is same)
              st.write("Email tools moved here.")
+
+        # BACKUP & RESTORE
+        st.markdown("---")
+        st.markdown("### 💾 BACKUP & RESTORE")
+        
+        # EXPORT
+        if st.button("📥 EXPORT ALL CLIENT DATA", key="export_all_btn", use_container_width=True):
+            with st.spinner("Exporting all client data..."):
+                all_data = mem_mgr.export_all_clients()
+                if all_data:
+                    json_str = json.dumps(all_data, ensure_ascii=False, indent=2)
+                    st.session_state.export_data = json_str
+                    st.session_state.export_count = len(all_data)
+                else:
+                    st.warning("No data to export.")
+        
+        if "export_data" in st.session_state and st.session_state.export_data:
+            st.success(f"✅ {st.session_state.export_count} clients ready to download.")
+            st.download_button(
+                label="⬇ DOWNLOAD BACKUP FILE",
+                data=st.session_state.export_data,
+                file_name=f"nesshine_backup_{int(time.time())}.json",
+                mime="application/json",
+                use_container_width=True
+            )
+        
+        # IMPORT
+        st.markdown("")
+        uploaded_backup = st.file_uploader("Upload Backup File (.json)", type=["json"], key="import_backup_file")
+        
+        if uploaded_backup:
+            if st.button("🔄 RESTORE FROM BACKUP", key="import_backup_btn", type="primary", use_container_width=True):
+                try:
+                    backup_data = json.loads(uploaded_backup.read().decode("utf-8"))
+                    with st.spinner("Restoring client data..."):
+                        imported, errors = mem_mgr.import_all_clients(backup_data)
+                    st.success(f"✅ RESTORED: {imported} clients imported. Errors: {errors}")
+                    time.sleep(2)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Import failed: {str(e)}")
 
 # FORCE REDEPLOY CHECK
