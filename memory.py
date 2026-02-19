@@ -43,6 +43,51 @@ class MemoryManager:
             if not os.path.exists("client_memories"):
                 os.makedirs("client_memories")
 
+    # ==================== APP SETTINGS ====================
+    def save_settings(self, settings_data):
+        """Save app settings (API keys, password) to Supabase."""
+        if self.use_db:
+            try:
+                row = {
+                    "client_key": "__app_settings__",
+                    "client_name": "__app_settings__",
+                    "sessions": json.dumps(settings_data, ensure_ascii=False),
+                    "updated_at": datetime.datetime.now().isoformat()
+                }
+                self.supabase.table("client_memories").upsert(row, on_conflict="client_key").execute()
+                return True
+            except Exception as e:
+                print(f"Settings save error: {e}")
+                return False
+        else:
+            # Fallback: local file
+            try:
+                with open("app_settings.json", "w", encoding="utf-8") as f:
+                    json.dump(settings_data, f, ensure_ascii=False)
+                return True
+            except:
+                return False
+    
+    def load_settings(self):
+        """Load app settings from Supabase."""
+        if self.use_db:
+            try:
+                result = self.supabase.table("client_memories").select("sessions").eq("client_key", "__app_settings__").execute()
+                if result.data:
+                    sessions = result.data[0]["sessions"]
+                    return json.loads(sessions) if isinstance(sessions, str) else sessions
+            except:
+                pass
+        else:
+            # Fallback: local file
+            if os.path.exists("app_settings.json"):
+                try:
+                    with open("app_settings.json", "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except:
+                    pass
+        return {}
+
     # ==================== LOAD ====================
     def load_memory(self, client_name):
         if self.use_db:
@@ -176,6 +221,8 @@ class MemoryManager:
         try:
             result = self.supabase.table("client_memories").select("client_key, client_name, sessions").execute()
             for row in result.data:
+                if row["client_key"] == "__app_settings__":
+                    continue
                 sessions = json.loads(row["sessions"]) if isinstance(row["sessions"], str) else row["sessions"]
                 clients.append({
                     "filename": row["client_key"],

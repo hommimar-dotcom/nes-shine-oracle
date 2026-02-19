@@ -264,39 +264,48 @@ api_key, active_key_num = get_active_api_key()
 with st.sidebar:
     st.markdown("## SYSTEM CONFIGURATION")
     
+    # Load saved settings from Supabase (once per session)
+    if "app_settings_loaded" not in st.session_state:
+        saved_settings = mem_mgr.load_settings()
+        st.session_state.saved_keys = saved_settings.get("api_keys", ["", "", ""])
+        st.session_state.app_settings_loaded = True
+    
     # API KEY MANAGEMENT (3 keys with priority)
-    with st.expander("🔑 API KEY MANAGEMENT", expanded=not api_key):
-        key1_input = st.text_input("KEY #1 (Primary)", 
-            value=os.environ.get("GEMINI_KEY_1", ""), 
+    with st.expander("🔑 API KEY MANAGEMENT", expanded=not any(st.session_state.saved_keys)):
+        key1_input = st.text_input("KEY #1", 
+            value=st.session_state.saved_keys[0] if len(st.session_state.saved_keys) > 0 else "", 
             type="password", key="key1_input")
-        key2_input = st.text_input("KEY #2 (Backup)", 
-            value=os.environ.get("GEMINI_KEY_2", ""), 
+        key2_input = st.text_input("KEY #2", 
+            value=st.session_state.saved_keys[1] if len(st.session_state.saved_keys) > 1 else "", 
             type="password", key="key2_input")
-        key3_input = st.text_input("KEY #3 (Reserve)", 
-            value=os.environ.get("GEMINI_KEY_3", ""), 
+        key3_input = st.text_input("KEY #3", 
+            value=st.session_state.saved_keys[2] if len(st.session_state.saved_keys) > 2 else "", 
             type="password", key="key3_input")
         
-        if st.button("SAVE KEYS", key="save_keys_btn", use_container_width=True):
-            st.session_state.saved_keys = [key1_input, key2_input, key3_input]
-            st.success("Keys saved for this session.")
+        if st.button("💾 SAVE KEYS", key="save_keys_btn", use_container_width=True):
+            new_keys = [key1_input, key2_input, key3_input]
+            st.session_state.saved_keys = new_keys
+            # Save to Supabase permanently
+            settings = mem_mgr.load_settings()
+            settings["api_keys"] = new_keys
+            if mem_mgr.save_settings(settings):
+                st.success("✅ Keys saved permanently.")
+            else:
+                st.warning("Saved for this session only.")
+            time.sleep(1)
             st.rerun()
     
-    # Determine active API key (saved inputs > env vars)
-    saved_keys = st.session_state.get("saved_keys", [
-        os.environ.get("GEMINI_KEY_1", ""),
-        os.environ.get("GEMINI_KEY_2", ""),
-        os.environ.get("GEMINI_KEY_3", ""),
-    ])
+    # Determine active API key
     api_key = None
     active_key_num = 0
-    for i, k in enumerate(saved_keys):
+    for i, k in enumerate(st.session_state.saved_keys):
         if k and k.strip():
             api_key = k.strip()
             active_key_num = i + 1
             break
     
     if api_key:
-        st.success(f"🔑 API KEY #{active_key_num} ACTIVE")
+        st.success(f"🔑 KEY #{active_key_num} ACTIVE")
     else:
         st.error("⚠️ NO API KEYS SET")
     
