@@ -153,27 +153,13 @@ class MemoryManager:
         # Reverse to show newest first
         for i, session in enumerate(reversed(memory_data["sessions"])):
             timestamp = session.get("timestamp", session.get("date", "Unknown"))
-            
-            # Get full reading, truncate to avoid context overflow (3000 chars per session)
-            full_reading = session.get("full_reading", "")
-            if full_reading:
-                # Strip HTML tags for cleaner context
-                import re
-                clean_reading = re.sub(r'<[^>]+>', '', full_reading)
-                clean_reading = clean_reading[:3000] + ("..." if len(clean_reading) > 3000 else "")
-            else:
-                clean_reading = "(Full reading text not available for this session)"
-            
             context += f"""
             --- SESSION {len(memory_data['sessions']) - i} ({timestamp}) ---
             TOPIC: {session.get('topic')}
-            TARGET NAME(S): {session.get('target_name')}
-            KEY PREDICTION GIVEN: {session.get('key_prediction')}
-            HOOK LEFT FOR NEXT SESSION: {session.get('hook_left')}
-            CLIENT MOOD: {session.get('client_mood')}
-            FULL READING CONTENT:
-            {clean_reading}
-            --- END SESSION ---
+            TARGET NAME: {session.get('target_name')}
+            PREDICTION GIVEN: {session.get('key_prediction')}
+            HOOK LEFT: {session.get('hook_left')}
+            MOOD: {session.get('client_mood')}
             """
             
         context += "\n!!! KRİTİK: YUKARIDAKİ GEÇMİŞ BİLGİLERLE ASLA ÇELİŞME. DEVAMLILIK SAĞLA !!!\n"
@@ -242,6 +228,19 @@ class MemoryManager:
         if os.path.exists(path):
             os.remove(path)
             return True
+        return False
+
+    def delete_session(self, client_name, session_index):
+        """Delete a specific session by index from a client's memory."""
+        mem = self.load_memory(client_name)
+        if mem and "sessions" in mem and len(mem["sessions"]) > session_index:
+            try:
+                del mem["sessions"][session_index]
+                self.save_memory(client_name, mem)
+                return True
+            except Exception as e:
+                print(f"Error deleting session: {e}")
+                return False
         return False
 
     # ==================== CREATE ====================

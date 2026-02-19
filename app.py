@@ -591,23 +591,47 @@ with tab3:
         if clients:
             st.write(f"Total: {len(clients)} Clients")
             
-            # Search
-            search_q = st.text_input("Search Database", placeholder="Name or Email...")
+            # Select Client
+            client_names = [c["client_name"] for c in clients]
+            selected_name = st.selectbox("SELECT CLIENT TO MANAGE", client_names, key="client_mgr")
             
-            filtered = [c for c in clients if search_q.lower() in c['client_name'].lower()] if search_q else clients
-            
-            # Table View
-            for client in filtered[:10]: # Limit display
-                c1, c2, c3 = st.columns([3, 1, 1])
-                with c1:
-                    st.write(f"**{client['client_name']}**")
-                with c2:
-                    st.caption(f"{client['session_count']} sessions")
-                with c3:
-                    if st.button("🗑️", key=f"del_v_{client['filename']}"):
-                        mem_mgr.delete_client(client['client_name'])
+            if selected_name:
+                st.markdown("---")
+                st.markdown(f"### 📂 {selected_name}")
+                
+                mem = mem_mgr.load_memory(selected_name)
+                
+                if mem and "sessions" in mem and mem["sessions"]:
+                    st.write(f"{len(mem['sessions'])} sessions")
+                    
+                    sessions_indexed = list(enumerate(mem["sessions"]))
+                    
+                    for original_idx, session in reversed(sessions_indexed):
+                        ts = session.get("timestamp", session.get("date", "?"))
+                        topic = session.get("topic", "No Topic")
+                        
+                        c1, c2, c3 = st.columns([2, 4, 1])
+                        with c1:
+                            st.text(ts)
+                        with c2:
+                            st.write(topic)
+                        with c3:
+                            if st.button("🗑️", key=f"del_s_{selected_name}_{original_idx}"):
+                                if mem_mgr.delete_session(selected_name, original_idx):
+                                    st.success("Deleted.")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                        st.divider()
+                else:
+                    st.info("No sessions found.")
+                
+                # Danger Zone
+                with st.expander("DANGER ZONE"):
+                    if st.button("DELETE ENTIRE CLIENT", key=f"wipe_{selected_name}", type="primary"):
+                        mem_mgr.delete_client(selected_name)
+                        st.warning(f"Deleted {selected_name}")
+                        time.sleep(1)
                         st.rerun()
-                st.divider()
         else:
             st.info("Database is empty.")
             
