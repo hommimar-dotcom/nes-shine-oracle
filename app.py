@@ -463,32 +463,16 @@ with tab1:
                         status_container.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
                         # time.sleep(0.1)  # Removed sleep to make stream faster
                     
-                    st.markdown("### 🌀 LIVE CHUANNELLING")
-                    stream_box = st.empty()
+                    st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
                     
-                    def stream_callback(chunk_text, clear=False):
-                        if clear or "stream_text" not in st.session_state:
-                            st.session_state.stream_text = ""
-                        if chunk_text:
-                            st.session_state.stream_text += chunk_text
-                            # Use unsafe_allow_html to actually render the HTML instead of displaying raw code
-                            stream_box.markdown(st.session_state.stream_text + " ▌", unsafe_allow_html=True)
-                    
-                    st.session_state.stream_text = ""
-                    
-                    # We need to adapt the run_cycle to accept stream_callback, or we do a try-catch here.
-                    # Since run_cycle calls medium_agent -> stream_with_retry, we need to pass stream_callback.
-                    # Let's adjust run_cycle call:
                     raw_text, delivery_msg, usage_stats = brain.run_cycle(
                         order_note, 
                         reading_topic, 
                         client_email=client_email, 
                         target_length=target_len, 
-                        progress_callback=update_status,
-                        stream_callback=stream_callback
+                        progress_callback=update_status
                     )
                     
-                    stream_box.empty() # Clear live stream box when done
                     
                     st.session_state.delivery_msg = delivery_msg
                     st.session_state.last_usage = usage_stats

@@ -139,7 +139,7 @@ class OracleBrain:
             print(f"MEMORY ERROR: Failed to save memory for {client_name}: {str(e)}")
             return False
 
-    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None, stream_callback=None, progress_callback=None):
+    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None, progress_callback=None):
         """
         The Writer Agent (Nes Shine).
         If feedback is provided, it means a revision is requested.
@@ -179,16 +179,8 @@ class OracleBrain:
             """
             
         # Use Standard (High Temp) Model for Writing with Retry
-        if stream_callback:
-            stream_callback(None, clear=True)
-            full_draft = ""
-            for chunk in self.stream_with_retry(self.model, prompt, progress_callback=progress_callback):
-                full_draft += chunk
-                stream_callback(chunk)
-            return full_draft
-        else:
-            response = self.generate_with_retry(self.model, prompt, progress_callback=progress_callback)
-            return response.text
+        response = self.generate_with_retry(self.model, prompt, progress_callback=progress_callback)
+        return response.text
 
     def get_ny_time(self):
         """Returns current time in New York."""
@@ -229,7 +221,7 @@ class OracleBrain:
             # Clean up the feedback to be ready for the medium
             return False, feedback
 
-    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None, stream_callback=None):
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None):
         """
         Runs the full generation loop with Memory Integration.
         client_email: Client's email address (e.g., "jessica@gmail.com") - used as memory key for 100% accuracy
@@ -277,7 +269,7 @@ class OracleBrain:
         # 4. DRAFTING LOOP
         if progress_callback: progress_callback("Nes Shine tünelliyor... (Taslak Hazırlanıyor)")
         
-        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, stream_callback=stream_callback, progress_callback=progress_callback)
+        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, progress_callback=progress_callback)
         
         # QC Loop - SINIRSIZ: %100 ONAY ALANA KADAR DEVAM EDER
         iteration = 0
@@ -305,8 +297,7 @@ class OracleBrain:
                 
                 return draft, delivery_msg, self.usage_stats
             
-            if progress_callback: progress_callback(f"Revize gerekiyor (Tur {iteration}): {review_notes[:100]}...")
-            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, stream_callback=stream_callback, progress_callback=progress_callback)
+            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, progress_callback=progress_callback)
     
     def generate_delivery_message(self, client_name, reading_topic):
         """Generates a short delivery message for the client."""
