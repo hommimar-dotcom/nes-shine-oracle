@@ -213,13 +213,20 @@ MEMORY_UPDATE_PROMPT = """
 Sen Nes Shine'ın hafızasısın. Az önce yapılan şu okumayı, gelecekte hatırlamak üzere özetle.
 Sonraki okumada "çelişki yaratmamak" için neleri hatırlamamız şart?
 
+ÖNEMLİ: Çok detaylı ve spesifik ol. Genel cümleler yerine somut bilgileri kaydet.
+Tarih, isim, sayı, vücut bölgesi, enerji rengi gibi spesifik detaylar ASLA atlanmamalı.
+
 Şu formatta JSON döndür (MD blokları olmadan, saf JSON):
 {{
-    "topic": "Okumanın ana konusu",
+    "topic": "Okumanın ana konusu (örn: Love & Relationship, Career, Health, Family)",
     "target_name": "Okumada odaklanılan diğer kişiler (Virgülle ayır). Yoksa null.",
-    "key_prediction": "Müşteriye verdiğin en büyük kehalet veya söz neydi?",
+    "key_prediction": "Müşteriye verdiğin en büyük kehalet veya söz neydi? Tarih ve detay dahil yaz.",
     "hook_left": "Bir sonraki seans için merak uyandırmak adına ne söyledin?",
-    "client_mood": "Müşterinin enerjisi nasıldı? (Üzgün, Umutlu, Bloke vb.)"
+    "client_mood": "Müşterinin enerjisi nasıldı? (Üzgün, Umutlu, Bloke vb.)",
+    "specific_details": "Okumada geçen TÜM somut detaylar: tarihler (Mart ayı, 3 hafta sonra vb.), sayılar, yerler, renkler, semboller, rüya detayları. Birden fazla varsa virgülle ayır.",
+    "promises_made": "Müşteriye verilen tüm sözler ve taahhütler. Örn: 'Mart ayında bir mesaj gelecek', 'Bu ilişki düzelecek'. Yoksa null.",
+    "physical_descriptions": "Vücut, enerji veya fiziksel ifadeler. Örn: 'sağ omzunda ağırlık', 'kalp çakrası bloke', 'göz altlarında yorgunluk hissediyorum'. Yoksa null.",
+    "reading_summary": "Tüm okumanın 3-5 cümlelik DETAYLI özeti. Ne söylendi, ne hissedildi, ne tavsiye edildi — hepsini kapsa."
 }}
 
 OKUMA METNİ:

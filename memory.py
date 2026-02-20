@@ -205,9 +205,14 @@ class MemoryManager:
             PREDICTION GIVEN: {session.get('key_prediction')}
             HOOK LEFT: {session.get('hook_left')}
             MOOD: {session.get('client_mood')}
+            SPECIFIC DETAILS: {session.get('specific_details', 'N/A')}
+            PROMISES MADE: {session.get('promises_made', 'N/A')}
+            PHYSICAL/ENERGY: {session.get('physical_descriptions', 'N/A')}
+            SESSION SUMMARY: {session.get('reading_summary', 'N/A')}
             """
             
         context += "\n!!! KRİTİK: YUKARIDAKİ GEÇMİŞ BİLGİLERLE ASLA ÇELİŞME. DEVAMLILIK SAĞLA !!!\n"
+        context += "!!! DAHA ÖNCE VERİLEN TARİHLER, İSİMLER, SÖZLER VE FİZİKSEL DETAYLARA SADIK KAL !!!\n"
         return context
 
     # ==================== LIST ALL ====================
@@ -297,11 +302,29 @@ class MemoryManager:
         clients = self.list_all_clients()
         for client in clients:
             client_name = client["client_name"]
-            mem = self.load_memory(client_name)
             if mem:
                 key = sanitize_filename(client_name)
                 all_data[key] = mem
         return all_data
+
+    # ==================== UPDATE ====================
+    def update_session_date(self, client_name, session_index, new_date):
+        """Updates the date/timestamp of a specific session."""
+        try:
+            mem = self.load_memory(client_name)
+            if mem and "sessions" in mem and len(mem["sessions"]) > session_index:
+                # Support both old 'date' and new 'timestamp' fields
+                if "timestamp" in mem["sessions"][session_index]:
+                    mem["sessions"][session_index]["timestamp"] = new_date
+                else:
+                    mem["sessions"][session_index]["date"] = new_date
+                
+                self.save_memory(client_name, mem)
+                return True
+            return False
+        except Exception as e:
+            print(f"Update error: {e}")
+            return False
 
     # ==================== BULK IMPORT ====================
     def import_all_clients(self, backup_data):
@@ -350,10 +373,10 @@ class MemoryManager:
         return True
 
     # ==================== PDF ANALYZE ====================
-    def analyze_pdf_and_create_client(self, client_email, pdf_file, api_key):
+    def analyze_pdf_and_create_client(self, client_email, pdf_file, api_keys):
         import io
         from PyPDF2 import PdfReader
-        import google.generativeai as genai
+        from agents import OracleBrain # Local import to avoid circular dependency
         
         try:
             pdf_reader = PdfReader(io.BytesIO(pdf_file.read()))
@@ -366,19 +389,10 @@ class MemoryManager:
         if not text.strip():
             return False, "PDF'den metin çıkarılamadı."
         
-        genai.configure(api_key=api_key)
-        
-        # Low Temp Config for Factual Extraction
-        generation_config = genai.types.GenerationConfig(
-            temperature=0.1,
-            top_p=0.95,
-            top_k=64,
-        )
-        
-        model = genai.GenerativeModel(
-            "gemini-3-pro-preview",
-            generation_config=generation_config
-        )
+        # Initialize Brain for robust APi usage
+        brain = OracleBrain(api_keys)
+        # We need to access the extraction model directly or via helper
+        # But brain.extraction_model is available
         
         analysis_prompt = f"""
         Aşağıdaki psişik okuma metnini ve dosya ismini analiz et. Şu bilgileri JSON formatında döndür:
@@ -391,7 +405,8 @@ class MemoryManager:
             "hook_left": "Gelecek için bırakılan merak uyandırıcı ipucu (varsa)",
             "client_mood": "Müşterinin ruh hali",
             "client_name": "Müşterinin adı (Dosya isminden veya metindeki 'Dear X' hitabından çıkar)",
-            "target_name": "Okumada adı geçen ve odaklanılan tüm kişiler (örn: Shane, Doug, Sarah). Aralarına virgül koyarak yaz. Yoksa null döndür."
+            "target_name": "Okumada adı geçen ve odaklanılan tüm kişiler (örn: Shane, Doug, Sarah). Aralarına virgül koyarak yaz. Yoksa null döndür.",
+            "reading_date": "Okumanın yapıldığı tarih (YYYY-MM-DD formatında). Metinde tarih yoksa 'Unknown' yaz."
         }}
         
         Sadece JSON döndür.
@@ -400,7 +415,8 @@ class MemoryManager:
         """ + text[:12000] # Increased context window slightly
         
         try:
-            response = model.generate_content(analysis_prompt)
+            # Use Brain's Retry Logic
+            response = brain.generate_with_retry(brain.extraction_model, analysis_prompt)
             result_text = response.text.strip()
             
             if "```json" in result_text:
@@ -416,7 +432,12 @@ class MemoryManager:
             # Fallback if name is still generic
             if "Unknown" in extracted_name:
                 extracted_name = pdf_file.name.split('_')[0]
-                
+            
+            # Extract Date
+            reading_date = data.get("reading_date")
+            if reading_date and "Unknown" in reading_date:
+                reading_date = None
+            
             # Create Memory
             self.create_client(
                 client_name=extracted_name,
@@ -424,7 +445,8 @@ class MemoryManager:
                 key_prediction=data.get("key_prediction", ""),
                 hook_left=data.get("hook_left", ""),
                 client_mood=data.get("client_mood", "Neutral"),
-                target_name=data.get("target_name") # Pass target name
+                target_name=data.get("target_name"), # Pass target name
+                date=reading_date # Pass extracted date
             )
             
             return True, "Başarılı"

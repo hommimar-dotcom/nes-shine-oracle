@@ -82,21 +82,28 @@ class OracleBrain:
                 # Load current memory
                 mem = memory_manager.load_memory(client_name)
                 
-                # Add new session
+                # Add new session with DEEP extraction fields
                 new_session = {
-                    "timestamp": self.get_ny_time(), # Full timestamp for precision
+                    "timestamp": self.get_ny_time(),
                     "topic": data.get("topic", "Genel"),
                     "target_name": data.get("target_name"),
                     "key_prediction": data.get("key_prediction", ""),
                     "hook_left": data.get("hook_left", ""),
-                    "client_mood": data.get("client_mood", "")
+                    "client_mood": data.get("client_mood", ""),
+                    "specific_details": data.get("specific_details", ""),
+                    "promises_made": data.get("promises_made"),
+                    "physical_descriptions": data.get("physical_descriptions"),
+                    "reading_summary": data.get("reading_summary", "")
                 }
                 
                 mem["sessions"].append(new_session)
                 memory_manager.save_memory(client_name, mem)
                 return True
-            return False
-        except:
+            else:
+                print(f"MEMORY WARNING: No JSON found in extraction response for {client_name}")
+                return False
+        except Exception as e:
+            print(f"MEMORY ERROR: Failed to save memory for {client_name}: {str(e)}")
             return False
 
     def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None):
@@ -206,6 +213,9 @@ class OracleBrain:
             if progress_callback: progress_callback("Nes Shine: Müşteri Kimliği Taranıyor...")
             extracted_name = self.identify_client(order_note)
             real_client_name = extracted_name
+            # Update memory_data with the extracted name for consistency
+            if memory_data:
+                memory_data["client_name"] = real_client_name
         
         if progress_callback: progress_callback(f"Müşteri Tanımlandı: {real_client_name}")
         
