@@ -139,7 +139,7 @@ class OracleBrain:
             print(f"MEMORY ERROR: Failed to save memory for {client_name}: {str(e)}")
             return False
 
-    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None, stream_callback=None):
+    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None, stream_callback=None, progress_callback=None):
         """
         The Writer Agent (Nes Shine).
         If feedback is provided, it means a revision is requested.
@@ -180,13 +180,14 @@ class OracleBrain:
             
         # Use Standard (High Temp) Model for Writing with Retry
         if stream_callback:
+            stream_callback(None, clear=True)
             full_draft = ""
-            for chunk in self.stream_with_retry(self.model, prompt):
+            for chunk in self.stream_with_retry(self.model, prompt, progress_callback=progress_callback):
                 full_draft += chunk
                 stream_callback(chunk)
             return full_draft
         else:
-            response = self.generate_with_retry(self.model, prompt)
+            response = self.generate_with_retry(self.model, prompt, progress_callback=progress_callback)
             return response.text
 
     def get_ny_time(self):
@@ -198,7 +199,7 @@ class OracleBrain:
         return now.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
-    def grandmaster_agent(self, draft_text, order_note, target_length):
+    def grandmaster_agent(self, draft_text, order_note, target_length, progress_callback=None):
         """
         The QC Agent. Checks quality.
         Returns (bool, string) -> (IS_APPROVED, FEEDBACK)
@@ -219,7 +220,7 @@ class OracleBrain:
         """
         
         # Use Low Temp Model for QC (Better Logic, Less Hallucination) with Retry
-        response = self.generate_with_retry(self.extraction_model, prompt)
+        response = self.generate_with_retry(self.extraction_model, prompt, progress_callback=progress_callback)
         feedback = response.text.strip()
         
         if "APPROVED" in feedback:
@@ -276,7 +277,7 @@ class OracleBrain:
         # 4. DRAFTING LOOP
         if progress_callback: progress_callback("Nes Shine tünelliyor... (Taslak Hazırlanıyor)")
         
-        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, stream_callback=stream_callback)
+        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, stream_callback=stream_callback, progress_callback=progress_callback)
         
         # QC Loop - SINIRSIZ: %100 ONAY ALANA KADAR DEVAM EDER
         iteration = 0
@@ -284,7 +285,7 @@ class OracleBrain:
             iteration += 1
             if progress_callback: progress_callback(f"Grandmaster Kalite Kontrolü Yapıyor... (Tur {iteration})")
             
-            approved, review_notes = self.grandmaster_agent(draft, order_note, target_length)
+            approved, review_notes = self.grandmaster_agent(draft, order_note, target_length, progress_callback=progress_callback)
             
             if approved:
                 self.usage_stats["qc_rounds"] = iteration
@@ -305,7 +306,7 @@ class OracleBrain:
                 return draft, delivery_msg, self.usage_stats
             
             if progress_callback: progress_callback(f"Revize gerekiyor (Tur {iteration}): {review_notes[:100]}...")
-            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, stream_callback=stream_callback)
+            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, stream_callback=stream_callback, progress_callback=progress_callback)
     
     def generate_delivery_message(self, client_name, reading_topic):
         """Generates a short delivery message for the client."""
@@ -320,7 +321,7 @@ class OracleBrain:
             return response.text.strip()
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
-    def generate_with_retry(self, model, prompt):
+    def generate_with_retry(self, model, prompt, progress_callback=None):
         """Wrapper for generate_content with API Key Rotation & Infinite Retry"""
         from google.api_core import exceptions
         import time
@@ -353,10 +354,12 @@ class OracleBrain:
                         self._reinit_models()
                         break
             except Exception as e:
-                print(f"UNKNOWN ERROR: {type(e).__name__} - {e}. Retrying in 10s...")
+                err_msg = f"API GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
                     
-    def stream_with_retry(self, model, prompt):
+    def stream_with_retry(self, model, prompt, progress_callback=None):
         """Streaming Generator Wrapper for generate_content with API Key Rotation & Infinite Retry"""
         from google.api_core import exceptions
         import time
@@ -398,7 +401,9 @@ class OracleBrain:
                         self._reinit_models()
                         break
             except Exception as e:
-                print(f"UNKNOWN ERROR: {type(e).__name__} - {e}. Retrying in 10s...")
+                err_msg = f"YAYIN GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
 
     def _reinit_models(self):

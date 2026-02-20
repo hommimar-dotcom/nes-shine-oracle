@@ -466,12 +466,13 @@ with tab1:
                     st.markdown("### 🌀 LIVE CHUANNELLING")
                     stream_box = st.empty()
                     
-                    def stream_callback(chunk_text):
-                        if "stream_text" not in st.session_state:
+                    def stream_callback(chunk_text, clear=False):
+                        if clear or "stream_text" not in st.session_state:
                             st.session_state.stream_text = ""
-                        st.session_state.stream_text += chunk_text
-                        # Use unsafe_allow_html to actually render the HTML instead of displaying raw code
-                        stream_box.markdown(st.session_state.stream_text + " ▌", unsafe_allow_html=True)
+                        if chunk_text:
+                            st.session_state.stream_text += chunk_text
+                            # Use unsafe_allow_html to actually render the HTML instead of displaying raw code
+                            stream_box.markdown(st.session_state.stream_text + " ▌", unsafe_allow_html=True)
                     
                     st.session_state.stream_text = ""
                     
