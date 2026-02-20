@@ -453,3 +453,67 @@ class MemoryManager:
             
         except Exception as e:
             return False, f"AI Analiz Hatası: {str(e)}"
+
+    # ==================== API USAGE TRACKING ====================
+    def save_usage(self, client_identifier, reading_topic, usage_data):
+        """Save API usage record for a reading."""
+        import pytz
+        ny_tz = pytz.timezone('America/New_York')
+        now = datetime.datetime.now(ny_tz)
+        
+        record = {
+            "timestamp": now.strftime("%Y-%m-%d %H:%M:%S %Z"),
+            "date": now.strftime("%Y-%m-%d"),
+            "client": client_identifier,
+            "topic": reading_topic,
+            "tokens_in": usage_data.get("tokens_in", 0),
+            "tokens_out": usage_data.get("tokens_out", 0),
+            "total_tokens": usage_data.get("total_tokens", 0),
+            "api_calls": usage_data.get("api_calls", 0),
+            "cost_usd": round(usage_data.get("cost_usd", 0.0), 6),
+            "qc_rounds": usage_data.get("qc_rounds", 0)
+        }
+        
+        # Load existing usage data
+        usage_mem = self.load_memory("__api_usage__")
+        usage_mem["client_name"] = "__api_usage__"
+        usage_mem["sessions"].append(record)
+        self.save_memory("__api_usage__", usage_mem)
+        print(f"USAGE SAVED: ${record['cost_usd']:.4f} for {client_identifier}")
+        return True
+    
+    def get_usage_stats(self, date_filter=None):
+        """Get aggregated usage stats. date_filter: 'YYYY-MM-DD' string or None for all-time."""
+        usage_mem = self.load_memory("__api_usage__")
+        records = usage_mem.get("sessions", [])
+        
+        if not records:
+            return {
+                "total_cost": 0.0, "total_tokens": 0, "total_readings": 0,
+                "total_api_calls": 0, "tokens_in": 0, "tokens_out": 0,
+                "records": []
+            }
+        
+        # Filter by date if specified
+        if date_filter:
+            date_str = date_filter if isinstance(date_filter, str) else date_filter.strftime("%Y-%m-%d")
+            filtered = [r for r in records if r.get("date") == date_str]
+        else:
+            filtered = records
+        
+        return {
+            "total_cost": round(sum(r.get("cost_usd", 0) for r in filtered), 4),
+            "total_tokens": sum(r.get("total_tokens", 0) for r in filtered),
+            "total_readings": len(filtered),
+            "total_api_calls": sum(r.get("api_calls", 0) for r in filtered),
+            "tokens_in": sum(r.get("tokens_in", 0) for r in filtered),
+            "tokens_out": sum(r.get("tokens_out", 0) for r in filtered),
+            "records": filtered
+        }
+    
+    def get_usage_date_range(self):
+        """Returns list of unique dates that have usage records."""
+        usage_mem = self.load_memory("__api_usage__")
+        records = usage_mem.get("sessions", [])
+        dates = sorted(set(r.get("date", "") for r in records if r.get("date")), reverse=True)
+        return dates

@@ -9,10 +9,44 @@ class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
     REQUIRED_MODEL = "gemini-3.1-pro-preview"
     
+    # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
+    PRICE_INPUT_PER_M = 2.00
+    PRICE_OUTPUT_PER_M = 12.00
+    
     def __init__(self, api_keys):
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
+        self._reset_usage_stats()
         self._configure_genai()
+    
+    def _reset_usage_stats(self):
+        """Reset token counters for a new reading cycle."""
+        self.usage_stats = {
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "total_tokens": 0,
+            "api_calls": 0,
+            "cost_usd": 0.0,
+            "qc_rounds": 0
+        }
+    
+    def _track_usage(self, response):
+        """Extract and accumulate token usage from a Gemini response."""
+        try:
+            meta = response.usage_metadata
+            if meta:
+                t_in = meta.prompt_token_count or 0
+                t_out = meta.candidates_token_count or 0
+                self.usage_stats["tokens_in"] += t_in
+                self.usage_stats["tokens_out"] += t_out
+                self.usage_stats["total_tokens"] += (t_in + t_out)
+                self.usage_stats["api_calls"] += 1
+                # Calculate cost
+                cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+                self.usage_stats["cost_usd"] += cost
+                print(f"USAGE: +{t_in} in / +{t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
+        except Exception as e:
+            print(f"USAGE TRACKING ERROR: {e}")
 
     def _configure_genai(self):
         current_key = self.api_keys[self.current_key_index]
@@ -106,7 +140,7 @@ class OracleBrain:
             print(f"MEMORY ERROR: Failed to save memory for {client_name}: {str(e)}")
             return False
 
-    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None):
+    def medium_agent(self, order_note, reading_topic, target_length="8000", memory_context="", feedback=None, stream_callback=None):
         """
         The Writer Agent (Nes Shine).
         If feedback is provided, it means a revision is requested.
@@ -146,8 +180,15 @@ class OracleBrain:
             """
             
         # Use Standard (High Temp) Model for Writing with Retry
-        response = self.generate_with_retry(self.model, prompt)
-        return response.text
+        if stream_callback:
+            full_draft = ""
+            for chunk in self.stream_with_retry(self.model, prompt):
+                full_draft += chunk
+                stream_callback(chunk)
+            return full_draft
+        else:
+            response = self.generate_with_retry(self.model, prompt)
+            return response.text
 
     def get_ny_time(self):
         """Returns current time in New York."""
@@ -188,13 +229,15 @@ class OracleBrain:
             # Clean up the feedback to be ready for the medium
             return False, feedback
 
-    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None):
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None, stream_callback=None):
         """
         Runs the full generation loop with Memory Integration.
         client_email: Client's email address (e.g., "jessica@gmail.com") - used as memory key for 100% accuracy
+        Returns: (reading_text, delivery_msg, usage_stats)
         """
         from memory import MemoryManager
         mem_mgr = MemoryManager()
+        self._reset_usage_stats()
         
         # 2. DETERMINE MEMORY KEY (Use Email if provided, otherwise fallback to client name)
         # Note: If email provided, we load memory first to see if we already know the name
@@ -234,7 +277,7 @@ class OracleBrain:
         # 4. DRAFTING LOOP
         if progress_callback: progress_callback("Nes Shine tünelliyor... (Taslak Hazırlanıyor)")
         
-        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context)
+        draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, stream_callback=stream_callback)
         
         # QC Loop - SINIRSIZ: %100 ONAY ALANA KADAR DEVAM EDER
         iteration = 0
@@ -245,18 +288,25 @@ class OracleBrain:
             approved, review_notes = self.grandmaster_agent(draft, order_note, target_length)
             
             if approved:
+                self.usage_stats["qc_rounds"] = iteration
                 if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
                 if progress_callback: progress_callback("Nes Shine Hafızaya Kaydediyor...")
                 self.update_memory(draft, memory_key, mem_mgr)
+                
+                # SAVE USAGE DATA
+                try:
+                    mem_mgr.save_usage(client_email or client_name, reading_topic, self.usage_stats)
+                except Exception as e:
+                    print(f"USAGE SAVE ERROR: {e}")
                 
                 # DELIVERY MESSAGE
                 if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")
                 delivery_msg = self.generate_delivery_message(client_name, reading_topic)
                 
-                return draft, delivery_msg
+                return draft, delivery_msg, self.usage_stats
             
             if progress_callback: progress_callback(f"Revize gerekiyor (Tur {iteration}): {review_notes[:100]}...")
-            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes)
+            draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, stream_callback=stream_callback)
     
     def generate_delivery_message(self, client_name, reading_topic):
         """Generates a short delivery message for the client."""
@@ -281,19 +331,26 @@ class OracleBrain:
         # Try with retries for transient errors (504 DeadlineExceeded, 503 ServiceUnavailable)
         for attempt in range(MAX_RETRIES):
             try:
-                return model.generate_content(prompt, request_options={'timeout': 1200})
+                # Catch invalid args to prevent silent infinite looping or hanging
+                response = model.generate_content(prompt, request_options={'timeout': 120})
+                self._track_usage(response)
+                return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 print(f"WARNING: Transient error ({type(e).__name__}) on attempt {attempt + 1}/{MAX_RETRIES}. Retrying in 5s...")
                 if attempt < MAX_RETRIES - 1:
                     time.sleep(5)
                 else:
                     raise Exception(f"API timeout after {MAX_RETRIES} retries: {str(e)}")
+            except exceptions.InvalidArgument as e:
+                print(f"CRITICAL: Invalid Argument. Model '{self.REQUIRED_MODEL}' might be unavailable or hallucinated? Error: {str(e)}")
+                raise Exception(f"INVALID ARGUMENT (Model might be blocked/non-existent): {str(e)}") 
             except exceptions.ResourceExhausted:
                 print("WARNING: API Key Exhausted (429). Attempting rotation...")
                 break  # Fall through to rotation logic below
         else:
             # All retries exhausted without hitting ResourceExhausted
-            return  # Should not reach here, but safety net
+            # Should not happen but fallback
+            raise Exception("API Retries Exhausted without a clear 429.")
         
         # Rotation Logic (only reached on ResourceExhausted)
         original_index = self.current_key_index
@@ -311,13 +368,86 @@ class OracleBrain:
                 
                 try:
                     if model == self.model:
-                        return self.model.generate_content(prompt, request_options={'timeout': 1200})
+                        response = self.model.generate_content(prompt, request_options={'timeout': 120})
                     else:
-                        return self.extraction_model.generate_content(prompt, request_options={'timeout': 1200})
+                        response = self.extraction_model.generate_content(prompt, request_options={'timeout': 120})
+                    self._track_usage(response)
+                    return response
                 except exceptions.ResourceExhausted:
                     continue # Try next key
                 except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable) as e:
                     print(f"WARNING: Transient error on rotated key: {str(e)}")
+                    continue # Try next key
+                except exceptions.InvalidArgument as e:
+                    raise Exception(f"INVALID ARGUMENT (Model might be blocked/non-existent): {str(e)}")
+                except Exception as e:
+                    raise e
+                    
+    def stream_with_retry(self, model, prompt):
+        """Streaming Generator Wrapper for generate_content with API Key Rotation"""
+        from google.api_core import exceptions
+        import time
+        
+        MAX_RETRIES = 2
+        
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = model.generate_content(prompt, stream=True, request_options={'timeout': 120})
+                full_text = ""
+                for chunk in response:
+                    full_text += chunk.text
+                    yield chunk.text
+                
+                # Streaming doesn't return usage meta perfectly per chunk in older sdks, 
+                # but we try grabbing from the final chunk if available
+                # Fallback to roughly estimating for now or ignore since stream.
+                try:
+                    if hasattr(response, 'usage_metadata'):
+                        self._track_usage(response)
+                except:
+                    pass
+                return
+            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
+                print(f"STREAM WARNING: Transient stream error on attempt {attempt + 1}/{MAX_RETRIES}.")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(5)
+                else:
+                    raise Exception(f"API STREAM timeout: {str(e)}")
+            except exceptions.InvalidArgument as e:
+                print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}")
+                raise Exception(f"INVALID ARGUMENT (Check model name): {str(e)}") 
+            except exceptions.ResourceExhausted:
+                print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
+                break
+        else:
+             raise Exception("API Retries Exhausted without a clear 429.")
+
+        original_index = self.current_key_index
+        
+        while True:
+            self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+            
+            if self.current_key_index == original_index:
+                raise Exception("ALL API KEYS EXHAUSTED DURING STREAM.")
+            
+            if self.api_keys[self.current_key_index]:
+                self._configure_genai()
+                self._reinit_models()
+                
+                try:
+                    target_m = self.model if model == self.model else self.extraction_model
+                    response = target_m.generate_content(prompt, stream=True, request_options={'timeout': 120})
+                    full_text = ""
+                    for chunk in response:
+                        full_text += chunk.text
+                        yield chunk.text
+                    return
+                except exceptions.ResourceExhausted:
+                    continue # Try next key
+                except exceptions.InvalidArgument as e:
+                    raise Exception(f"INVALID ARGUMENT (Check model name): {str(e)}")
+                except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable) as e:
+                    print(f"WARNING: Transient stream error on rotated key: {str(e)}")
                     continue # Try next key
                 except Exception as e:
                     raise e

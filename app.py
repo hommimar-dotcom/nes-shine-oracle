@@ -330,6 +330,50 @@ with st.sidebar:
         st.metric("CLIENTS", total_clients)
     
     st.markdown("---")
+    
+    # API COST TRACKER
+    st.markdown("### 💰 API COST TRACKER")
+    
+    # Date picker for cost filtering
+    import datetime as dt
+    available_dates = mem_mgr.get_usage_date_range()
+    
+    cost_view = st.radio("VIEW", ["TODAY", "SELECT DATE", "ALL TIME"], horizontal=True, key="cost_view_radio", label_visibility="collapsed")
+    
+    if cost_view == "TODAY":
+        import pytz
+        ny_tz = pytz.timezone('America/New_York')
+        today_str = dt.datetime.now(ny_tz).strftime("%Y-%m-%d")
+        usage = mem_mgr.get_usage_stats(date_filter=today_str)
+        date_label = "TODAY"
+    elif cost_view == "SELECT DATE":
+        if available_dates:
+            selected_date = st.selectbox("DATE", available_dates, key="cost_date_select", label_visibility="collapsed")
+            usage = mem_mgr.get_usage_stats(date_filter=selected_date)
+            date_label = selected_date
+        else:
+            usage = mem_mgr.get_usage_stats()
+            date_label = "NO DATA"
+    else:
+        usage = mem_mgr.get_usage_stats()
+        date_label = "ALL TIME"
+    
+    st.caption(f"📅 {date_label}")
+    cost_c1, cost_c2 = st.columns(2)
+    with cost_c1:
+        st.metric("COST (USD)", f"${usage['total_cost']:.4f}")
+    with cost_c2:
+        st.metric("READINGS", usage['total_readings'])
+    
+    tok_c1, tok_c2 = st.columns(2)
+    with tok_c1:
+        # Format tokens with K suffix
+        total_k = usage['total_tokens'] / 1000
+        st.metric("TOKENS", f"{total_k:.1f}K" if total_k > 0 else "0")
+    with tok_c2:
+        st.metric("API CALLS", usage['total_api_calls'])
+    
+    st.markdown("---")
     st.markdown("### CLIENT ARCHIVES")
     
     # List Saved Readings
@@ -427,10 +471,35 @@ with tab1:
                         clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
                         st.session_state.last_status = clean_msg.strip().upper()
                         status_container.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
-                        time.sleep(0.1)
+                        # time.sleep(0.1)  # Removed sleep to make stream faster
                     
-                    raw_text, delivery_msg = brain.run_cycle(order_note, reading_topic, client_email=client_email, target_length=target_len, progress_callback=update_status)
+                    st.markdown("### 🌀 LIVE CHUANNELLING")
+                    stream_box = st.empty()
+                    
+                    def stream_callback(chunk_text):
+                        if "stream_text" not in st.session_state:
+                            st.session_state.stream_text = ""
+                        st.session_state.stream_text += chunk_text
+                        stream_box.markdown(f"> {st.session_state.stream_text} ▌")
+                    
+                    st.session_state.stream_text = ""
+                    
+                    # We need to adapt the run_cycle to accept stream_callback, or we do a try-catch here.
+                    # Since run_cycle calls medium_agent -> stream_with_retry, we need to pass stream_callback.
+                    # Let's adjust run_cycle call:
+                    raw_text, delivery_msg, usage_stats = brain.run_cycle(
+                        order_note, 
+                        reading_topic, 
+                        client_email=client_email, 
+                        target_length=target_len, 
+                        progress_callback=update_status,
+                        stream_callback=stream_callback
+                    )
+                    
+                    stream_box.empty() # Clear live stream box when done
+                    
                     st.session_state.delivery_msg = delivery_msg
+                    st.session_state.last_usage = usage_stats
                     
                     # 2. FORMAT HTML
                     update_status("COMPILING HTML ARCHITECTURE...")
@@ -495,6 +564,20 @@ with tab1:
                 st.markdown("### 📨 DELIVERY MESSAGE")
                 st.caption("Copy and send this to the client with the reading:")
                 st.code(st.session_state.delivery_msg, language=None)
+            
+            # COST BREAKDOWN
+            if "last_usage" in st.session_state and st.session_state.last_usage:
+                u = st.session_state.last_usage
+                st.markdown("---")
+                st.markdown("### 💰 READING COST")
+                cc1, cc2, cc3 = st.columns(3)
+                with cc1:
+                    st.metric("TOTAL COST", f"${u['cost_usd']:.4f}")
+                with cc2:
+                    st.metric("TOKENS", f"{u['total_tokens']:,}")
+                with cc3:
+                    st.metric("QC ROUNDS", u['qc_rounds'])
+                st.caption(f"📊 {u['tokens_in']:,} input + {u['tokens_out']:,} output · {u['api_calls']} API calls")
             
             # RAW TEXT EXPANDER
             with st.expander("VIEW SOURCE CODE"):
