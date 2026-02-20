@@ -251,7 +251,7 @@ def try_api_key_with_fallback():
         if key.strip():
             try:
                 genai.configure(api_key=key.strip())
-                model = genai.GenerativeModel("gemini-3-pro-preview")
+                model = genai.GenerativeModel("gemini-3.1-pro-preview")
                 model.generate_content("test", request_options={'timeout': 10})
                 return key.strip(), i + 1
             except Exception:
@@ -295,17 +295,13 @@ with st.sidebar:
             time.sleep(1)
             st.rerun()
     
-    # Determine active API key
-    api_key = None
-    active_key_num = 0
-    for i, k in enumerate(st.session_state.saved_keys):
-        if k and k.strip():
-            api_key = k.strip()
-            active_key_num = i + 1
-            break
+    # Determine active API keys (COLLECT ALL VALID KEYS)
+    valid_keys = [k.strip() for k in st.session_state.saved_keys if k and k.strip()]
+    api_key = valid_keys[0] if valid_keys else None
+    active_key_num = len(valid_keys)
     
     if api_key:
-        st.success(f"🔑 KEY #{active_key_num} ACTIVE")
+        st.success(f"🔑 {len(valid_keys)} ACTIVE KEYS READY (ROTATION ENABLED)")
     else:
         st.error("⚠️ NO API KEYS SET")
     
@@ -419,7 +415,7 @@ with tab1:
             if not order_note or not reading_topic:
                 st.error("MISSING INPUT PARAMETERS.")
             else:
-                brain = OracleBrain(api_key)
+                brain = OracleBrain(valid_keys)
                 st.session_state.is_generating = True
                 st.session_state.last_status = "INITIALIZING..."
                 status_container = st.empty()
@@ -581,7 +577,7 @@ with tab2:
                     queue_mgr.mark_processing(item["id"])
                     
                     try:
-                        brain = OracleBrain(api_key)
+                        brain = OracleBrain(valid_keys)
                         raw_text, delivery_msg = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
@@ -684,7 +680,7 @@ with tab3:
                 
                 for idx, pdf_file in enumerate(uploaded_pdfs):
                     with st.spinner(f"Reading & Encoding: {pdf_file.name}..."):
-                        success, result = mem_mgr.analyze_pdf_and_create_client(import_email, pdf_file, api_key)
+                        success, result = mem_mgr.analyze_pdf_and_create_client(import_email, pdf_file, valid_keys)
                         time.sleep(1.5) # DB Consistency pause
                     
                     if success:
@@ -728,9 +724,16 @@ with tab3:
                         ts = session.get("timestamp", session.get("date", "?"))
                         topic = session.get("topic", "No Topic")
                         
-                        c1, c2, c3 = st.columns([2, 4, 1])
+                        c1, c2, c3 = st.columns([3, 4, 1])
                         with c1:
-                            st.text(ts)
+                            # EDITABLE DATE
+                            new_date = st.text_input("Date", value=ts, key=f"date_{selected_name}_{original_idx}", label_visibility="collapsed")
+                            if new_date != ts:
+                                if st.button("💾", key=f"save_{selected_name}_{original_idx}", help="Save new date"):
+                                    if mem_mgr.update_session_date(selected_name, original_idx, new_date):
+                                        st.success("Updated!")
+                                        time.sleep(0.5)
+                                        st.rerun()
                         with c2:
                             st.write(topic)
                         with c3:
