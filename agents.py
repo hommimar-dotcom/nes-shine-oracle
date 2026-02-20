@@ -7,10 +7,18 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
-    REQUIRED_MODEL = "gemini-3-pro-preview"
+    REQUIRED_MODEL = "gemini-3.1-pro-preview"
     
-    def __init__(self, api_key):
-        genai.configure(api_key=api_key)
+    def __init__(self, api_keys):
+        self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
+        self.current_key_index = 0
+        self._configure_genai()
+
+    def _configure_genai(self):
+        current_key = self.api_keys[self.current_key_index]
+        genai.configure(api_key=current_key)
+        print(f"DEBUG: Switched to API Key Index {self.current_key_index}")
+
         
         # Generation config - YÜKSEKtemperature = DAHA İNSANSI YAZI
         # temperature 1.3 = daha yaratıcı, daha az tahmin edilebilir
@@ -52,8 +60,8 @@ class OracleBrain:
     def identify_client(self, text):
         """Extracts client name from order note."""
         prompt = CLIENT_ID_PROMPT.format(text=text)
-        # Use Low Temp Model
-        resp = self.extraction_model.generate_content(prompt)
+        # Use Low Temp Model with Retry
+        resp = self.generate_with_retry(self.extraction_model, prompt)
         identified_name = resp.text.strip()
         self.last_client_name = identified_name
         return identified_name
@@ -61,8 +69,8 @@ class OracleBrain:
 
     def update_memory(self, reading_text, client_name, memory_manager):
         prompt = MEMORY_UPDATE_PROMPT.format(reading_text=reading_text)
-        # Use Low Temp Model
-        resp = self.extraction_model.generate_content(prompt)
+        # Use Low Temp Model with Retry
+        resp = self.generate_with_retry(self.extraction_model, prompt)
         try:
             # Robust JSON extraction using regex
             import re
@@ -130,8 +138,8 @@ class OracleBrain:
             Lütfen yukarıdaki eleştirileri dikkate alarak metni YENİDEN YAZ.
             """
             
-        # Use Standard (High Temp) Model for Writing
-        response = self.model.generate_content(prompt, request_options={'timeout': 1200})
+        # Use Standard (High Temp) Model for Writing with Retry
+        response = self.generate_with_retry(self.model, prompt)
         return response.text
 
     def get_ny_time(self):
@@ -163,8 +171,8 @@ class OracleBrain:
         {order_note}
         """
         
-        # Use Low Temp Model for QC (Better Logic, Less Hallucination)
-        response = self.extraction_model.generate_content(prompt, request_options={'timeout': 1200})
+        # Use Low Temp Model for QC (Better Logic, Less Hallucination) with Retry
+        response = self.generate_with_retry(self.extraction_model, prompt)
         feedback = response.text.strip()
         
         if "APPROVED" in feedback:
@@ -248,8 +256,60 @@ class OracleBrain:
                 client_name=client_name,
                 reading_topic=reading_topic
             )
-            # Use Low Temp Model
-            response = self.extraction_model.generate_content(prompt)
+            # Use Main Creative Model with Retry
+            response = self.generate_with_retry(self.model, prompt)
             return response.text.strip()
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
+    def generate_with_retry(self, model, prompt):
+        """Wrapper for generate_content with API Key Rotation"""
+        from google.api_core import exceptions
+        
+        # Try current key first
+        try:
+            return model.generate_content(prompt)
+        except exceptions.ResourceExhausted:
+            print("WARNING: API Key Exhausted (429). Attempting rotation...")
+            
+            # Rotation Logic
+            original_index = self.current_key_index
+            
+            while True:
+                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                
+                # If we cycled back to start, we are truly out of quota
+                if self.current_key_index == original_index:
+                    raise Exception("ALL API KEYS EXHAUSTED.")
+                
+                if self.api_keys[self.current_key_index]: # Skip empty keys
+                    self._configure_genai()
+                    # Re-init models with new configuration (crucial as they stick to old client)
+                    self._reinit_models()
+                    
+                    try:
+                        # Retry with new key
+                        # Note: We must re-instantiate models or they might still use old client
+                        # But simpler is to re-configure global genai which models use?
+                        # Actually genai.GenerativeModel doesn't hold key, it uses global config at call time? 
+                        # Let's verifying mechanism. 
+                        # To be safe, we re-create the model instance we are using.
+                        if model == self.model:
+                            return self.model.generate_content(prompt)
+                        else:
+                            return self.extraction_model.generate_content(prompt)
+                    except exceptions.ResourceExhausted:
+                        continue # Try next key
+                    except Exception as e:
+                        raise e # Other errors fatal
+
+    def _reinit_models(self):
+        self.model = genai.GenerativeModel(
+            self.REQUIRED_MODEL,
+            generation_config=self.generation_config,
+            safety_settings=self.safety_settings
+        )
+        self.extraction_model = genai.GenerativeModel(
+            self.REQUIRED_MODEL,
+            generation_config=self.extraction_config,
+            safety_settings=self.safety_settings
+        )
