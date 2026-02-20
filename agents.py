@@ -155,7 +155,7 @@ class OracleBrain:
         SIPARİŞ NOTU:
         {order_note}
         
-        OKUMA KONUSU:
+        OKUMA KONUSU (SADECE SENİN İÇİN CONTEXT, MÜŞTERİYE ASLA SÖYLEME!):
         {reading_topic}
         
         --- HEDEF UZUNLUK ---
