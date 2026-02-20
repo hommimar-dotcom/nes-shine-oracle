@@ -61,8 +61,7 @@ class OracleBrain:
         self.generation_config = genai.types.GenerationConfig(
             temperature=1.3,
             top_p=0.95,
-            top_k=64,
-            max_output_tokens=8192,
+            top_k=64
         )
         
         # SAFETY SETTINGS: BLOCK_NONE (Crucial for Occult/Esoteric topics to not trigger false positives)
@@ -322,85 +321,57 @@ class OracleBrain:
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
     def generate_with_retry(self, model, prompt):
-        """Wrapper for generate_content with API Key Rotation & Timeout Retry"""
+        """Wrapper for generate_content with API Key Rotation & Infinite Retry"""
         from google.api_core import exceptions
         import time
         
-        MAX_RETRIES = 3
-        
-        # Try with retries for transient errors (504 DeadlineExceeded, 503 ServiceUnavailable)
-        for attempt in range(MAX_RETRIES):
+        attempt = 0
+        while True:
+            attempt += 1
             try:
-                # Catch invalid args to prevent silent infinite looping or hanging
-                response = model.generate_content(prompt, request_options={'timeout': 120})
+                target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                response = target_model.generate_content(prompt, request_options={'timeout': 120})
                 self._track_usage(response)
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                print(f"WARNING: Transient error ({type(e).__name__}) on attempt {attempt + 1}/{MAX_RETRIES}. Retrying in 5s...")
-                if attempt < MAX_RETRIES - 1:
-                    time.sleep(5)
-                else:
-                    raise Exception(f"API timeout after {MAX_RETRIES} retries: {str(e)}")
+                print(f"WARNING: Transient error ({type(e).__name__}) on attempt {attempt}. Retrying in 5s...")
+                time.sleep(5)
             except exceptions.InvalidArgument as e:
-                print(f"CRITICAL: Invalid Argument. Model '{self.REQUIRED_MODEL}' might be unavailable or hallucinated? Error: {str(e)}")
-                raise Exception(f"INVALID ARGUMENT (Model might be blocked/non-existent): {str(e)}") 
+                print(f"CRITICAL: Invalid Argument. Model might be blocked. Retrying... Error: {str(e)}")
+                time.sleep(5)
             except exceptions.ResourceExhausted:
                 print("WARNING: API Key Exhausted (429). Attempting rotation...")
-                break  # Fall through to rotation logic below
-        else:
-            # All retries exhausted without hitting ResourceExhausted
-            # Should not happen but fallback
-            raise Exception("API Retries Exhausted without a clear 429.")
-        
-        # Rotation Logic (only reached on ResourceExhausted)
-        original_index = self.current_key_index
-        
-        while True:
-            self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-            
-            # If we cycled back to start, we are truly out of quota
-            if self.current_key_index == original_index:
-                raise Exception("ALL API KEYS EXHAUSTED.")
-            
-            if self.api_keys[self.current_key_index]: # Skip empty keys
-                self._configure_genai()
-                self._reinit_models()
-                
-                try:
-                    if model == self.model:
-                        response = self.model.generate_content(prompt, request_options={'timeout': 120})
-                    else:
-                        response = self.extraction_model.generate_content(prompt, request_options={'timeout': 120})
-                    self._track_usage(response)
-                    return response
-                except exceptions.ResourceExhausted:
-                    continue # Try next key
-                except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable) as e:
-                    print(f"WARNING: Transient error on rotated key: {str(e)}")
-                    continue # Try next key
-                except exceptions.InvalidArgument as e:
-                    raise Exception(f"INVALID ARGUMENT (Model might be blocked/non-existent): {str(e)}")
-                except Exception as e:
-                    raise e
+                original_index = self.current_key_index
+                while True:
+                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                    if self.current_key_index == original_index:
+                        print("ALL API KEYS EXHAUSTED. Sleeping 60s before retrying...")
+                        time.sleep(60)
+                        break
+                    if self.api_keys[self.current_key_index]:
+                        self._configure_genai()
+                        self._reinit_models()
+                        break
+            except Exception as e:
+                print(f"UNKNOWN ERROR: {type(e).__name__} - {e}. Retrying in 10s...")
+                time.sleep(10)
                     
     def stream_with_retry(self, model, prompt):
-        """Streaming Generator Wrapper for generate_content with API Key Rotation"""
+        """Streaming Generator Wrapper for generate_content with API Key Rotation & Infinite Retry"""
         from google.api_core import exceptions
         import time
         
-        MAX_RETRIES = 2
-        
-        for attempt in range(MAX_RETRIES):
+        attempt = 0
+        while True:
+            attempt += 1
             try:
-                response = model.generate_content(prompt, stream=True, request_options={'timeout': 120})
+                target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 120})
                 full_text = ""
                 for chunk in response:
                     full_text += chunk.text
                     yield chunk.text
                 
-                # Streaming doesn't return usage meta perfectly per chunk in older sdks, 
-                # but we try grabbing from the final chunk if available
-                # Fallback to roughly estimating for now or ignore since stream.
                 try:
                     if hasattr(response, 'usage_metadata'):
                         self._track_usage(response)
@@ -408,49 +379,27 @@ class OracleBrain:
                     pass
                 return
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                print(f"STREAM WARNING: Transient stream error on attempt {attempt + 1}/{MAX_RETRIES}.")
-                if attempt < MAX_RETRIES - 1:
-                    time.sleep(5)
-                else:
-                    raise Exception(f"API STREAM timeout: {str(e)}")
+                print(f"STREAM WARNING: Transient stream error on attempt {attempt}. Retrying in 5s...")
+                time.sleep(5)
             except exceptions.InvalidArgument as e:
-                print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}")
-                raise Exception(f"INVALID ARGUMENT (Check model name): {str(e)}") 
+                print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}. Retrying...")
+                time.sleep(5)
             except exceptions.ResourceExhausted:
                 print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
-                break
-        else:
-             raise Exception("API Retries Exhausted without a clear 429.")
-
-        original_index = self.current_key_index
-        
-        while True:
-            self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-            
-            if self.current_key_index == original_index:
-                raise Exception("ALL API KEYS EXHAUSTED DURING STREAM.")
-            
-            if self.api_keys[self.current_key_index]:
-                self._configure_genai()
-                self._reinit_models()
-                
-                try:
-                    target_m = self.model if model == self.model else self.extraction_model
-                    response = target_m.generate_content(prompt, stream=True, request_options={'timeout': 120})
-                    full_text = ""
-                    for chunk in response:
-                        full_text += chunk.text
-                        yield chunk.text
-                    return
-                except exceptions.ResourceExhausted:
-                    continue # Try next key
-                except exceptions.InvalidArgument as e:
-                    raise Exception(f"INVALID ARGUMENT (Check model name): {str(e)}")
-                except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable) as e:
-                    print(f"WARNING: Transient stream error on rotated key: {str(e)}")
-                    continue # Try next key
-                except Exception as e:
-                    raise e
+                original_index = self.current_key_index
+                while True:
+                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                    if self.current_key_index == original_index:
+                        print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
+                        time.sleep(60)
+                        break
+                    if self.api_keys[self.current_key_index]:
+                        self._configure_genai()
+                        self._reinit_models()
+                        break
+            except Exception as e:
+                print(f"UNKNOWN ERROR: {type(e).__name__} - {e}. Retrying in 10s...")
+                time.sleep(10)
 
     def _reinit_models(self):
         self.model = genai.GenerativeModel(

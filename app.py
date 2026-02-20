@@ -480,7 +480,8 @@ with tab1:
                         if "stream_text" not in st.session_state:
                             st.session_state.stream_text = ""
                         st.session_state.stream_text += chunk_text
-                        stream_box.markdown(f"> {st.session_state.stream_text} ▌")
+                        # Use unsafe_allow_html to actually render the HTML instead of displaying raw code
+                        stream_box.markdown(st.session_state.stream_text + " ▌", unsafe_allow_html=True)
                     
                     st.session_state.stream_text = ""
                     
