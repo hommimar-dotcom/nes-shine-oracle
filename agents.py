@@ -272,45 +272,55 @@ class OracleBrain:
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
     def generate_with_retry(self, model, prompt):
-        """Wrapper for generate_content with API Key Rotation"""
+        """Wrapper for generate_content with API Key Rotation & Timeout Retry"""
         from google.api_core import exceptions
+        import time
         
-        # Try current key first
-        try:
-            return model.generate_content(prompt)
-        except exceptions.ResourceExhausted:
-            print("WARNING: API Key Exhausted (429). Attempting rotation...")
+        MAX_RETRIES = 3
+        
+        # Try with retries for transient errors (504 DeadlineExceeded, 503 ServiceUnavailable)
+        for attempt in range(MAX_RETRIES):
+            try:
+                return model.generate_content(prompt, request_options={'timeout': 1200})
+            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
+                print(f"WARNING: Transient error ({type(e).__name__}) on attempt {attempt + 1}/{MAX_RETRIES}. Retrying in 5s...")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(5)
+                else:
+                    raise Exception(f"API timeout after {MAX_RETRIES} retries: {str(e)}")
+            except exceptions.ResourceExhausted:
+                print("WARNING: API Key Exhausted (429). Attempting rotation...")
+                break  # Fall through to rotation logic below
+        else:
+            # All retries exhausted without hitting ResourceExhausted
+            return  # Should not reach here, but safety net
+        
+        # Rotation Logic (only reached on ResourceExhausted)
+        original_index = self.current_key_index
+        
+        while True:
+            self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
             
-            # Rotation Logic
-            original_index = self.current_key_index
+            # If we cycled back to start, we are truly out of quota
+            if self.current_key_index == original_index:
+                raise Exception("ALL API KEYS EXHAUSTED.")
             
-            while True:
-                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+            if self.api_keys[self.current_key_index]: # Skip empty keys
+                self._configure_genai()
+                self._reinit_models()
                 
-                # If we cycled back to start, we are truly out of quota
-                if self.current_key_index == original_index:
-                    raise Exception("ALL API KEYS EXHAUSTED.")
-                
-                if self.api_keys[self.current_key_index]: # Skip empty keys
-                    self._configure_genai()
-                    # Re-init models with new configuration (crucial as they stick to old client)
-                    self._reinit_models()
-                    
-                    try:
-                        # Retry with new key
-                        # Note: We must re-instantiate models or they might still use old client
-                        # But simpler is to re-configure global genai which models use?
-                        # Actually genai.GenerativeModel doesn't hold key, it uses global config at call time? 
-                        # Let's verifying mechanism. 
-                        # To be safe, we re-create the model instance we are using.
-                        if model == self.model:
-                            return self.model.generate_content(prompt)
-                        else:
-                            return self.extraction_model.generate_content(prompt)
-                    except exceptions.ResourceExhausted:
-                        continue # Try next key
-                    except Exception as e:
-                        raise e # Other errors fatal
+                try:
+                    if model == self.model:
+                        return self.model.generate_content(prompt, request_options={'timeout': 1200})
+                    else:
+                        return self.extraction_model.generate_content(prompt, request_options={'timeout': 1200})
+                except exceptions.ResourceExhausted:
+                    continue # Try next key
+                except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable) as e:
+                    print(f"WARNING: Transient error on rotated key: {str(e)}")
+                    continue # Try next key
+                except Exception as e:
+                    raise e
 
     def _reinit_models(self):
         self.model = genai.GenerativeModel(
