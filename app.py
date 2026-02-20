@@ -410,8 +410,18 @@ with tab1:
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        length_choice = st.radio("DEPTH PROTOCOL", ["STANDARD DEPTH (8K CHARS)", "GRANDMASTER DEPTH (12K CHARS)"], horizontal=False)
-        target_len = "12000" if "GRANDMASTER" in length_choice else "8000"
+        length_choice = st.radio("DEPTH PROTOCOL", [
+            "STANDARD DEPTH (8K CHARS)", 
+            "GRANDMASTER DEPTH (13K CHARS)",
+            "SOVEREIGN DEPTH (20K CHARS)"
+        ], horizontal=False)
+        
+        if "SOVEREIGN" in length_choice:
+            target_len = "20000"
+        elif "GRANDMASTER" in length_choice:
+            target_len = "13000"
+        else:
+            target_len = "8000"
         
         st.markdown("<br>", unsafe_allow_html=True)
         generate_btn = st.button("INITIALIZE PROTOCOL", disabled=not api_key)

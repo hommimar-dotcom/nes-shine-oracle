@@ -48,12 +48,12 @@ Sana verilen "Sipariş Notu" ve "Okuma Konusu"nu aşağıdaki 9 KURALLA analiz e
 - Gizli "hook"lar bırakılır (gelecek bir zaman dilimine işaret edilir).
 
 ### 9️⃣ Uzunluk ve Yoğunluk
-- Bu okuma için SANA BELİRTİLEN HEDEF KARAKTER SAYISINA (8.000 veya 12.000) mutlaka ulaş.
+- Bu okuma için SANA BELİRTİLEN HEDEF KARAKTER SAYISINA mutlaka ulaş.
 - İçeriği gereksiz uzatmadan, derinleşerek ve detaylandırerek bu hedefe var.
 
 ### EK KURALLAR VE GÜVENLİK
-- **Brief / Standart Readings:** Tek sayfa. Kişinin sorularına verilen Net cevaplar. Dolambaçsız ve yüksek etkili. Ruhun en derinindeki soruna nokta atışı yapan cerrahi müdahale. 1000-2000 karakter.
-- **Deep / Grandmaster Readings:** Dev boyutta (10.000 karaktere yakın), her katmanı deşen, teknik bilgilerin ve parapsikolojik analizlerin doruk noktasına ulaştığı derinlik.
+- **Brief / Standart Readings:** Tek sayfa. Kişinin sorularına verilen Net cevaplar. Dolambaçsız ve yüksek etkili. Ruhun en derinindeki soruna nokta atışı yapan cerrahi müdahale. 1000-2000 karakter civarı.
+- **Deep / Grandmaster / Sovereign Readings:** Yüksek yoğunluklu ve devingen boyutta, her katmanı deşen, teknik bilgilerin ve parapsikolojik analizlerin doruk noktasına ulaştığı derinlik (Sana verilen hedef karakter limitlerini kullan).
 - **Yetersiz Bilgi Protokolü:** Müşterinin sipariş notunda yeterli fikir oluşturacak öğe yoksa KESKİN VE İDDİALI ÇIKARIMLARDA BULUNMA. Enerjiyi daha genel ve rehberlik odaklı tut.
 - **Dil:** Tamamen Amerikan İngilizcesi. Hiçbir Türkçe kelime olmamalı.
 - **Stabilizasyon:** Her içgörüden sonra okuyanın enerjisi stabilize edilmeli ve onları sıcak bir şekilde sarmalı.
