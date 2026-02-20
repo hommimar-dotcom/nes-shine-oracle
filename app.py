@@ -227,35 +227,17 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==================== API KEY ROTATION ====================
+# We no longer rely strictly on ENV vars for rotation if they are set via UI
 def get_active_api_key():
-    """Try keys in priority order: KEY_1 → KEY_2 → KEY_3"""
+    """Fallback method if UI keys aren't loaded yet."""
     keys = [
         os.environ.get("GEMINI_KEY_1", ""),
         os.environ.get("GEMINI_KEY_2", ""),
         os.environ.get("GEMINI_KEY_3", ""),
     ]
-    # Return first non-empty key
     for i, key in enumerate(keys):
         if key.strip():
             return key.strip(), i + 1
-    return None, 0
-
-def try_api_key_with_fallback():
-    """Try each key, return working key or None."""
-    keys = [
-        os.environ.get("GEMINI_KEY_1", ""),
-        os.environ.get("GEMINI_KEY_2", ""),
-        os.environ.get("GEMINI_KEY_3", ""),
-    ]
-    for i, key in enumerate(keys):
-        if key.strip():
-            try:
-                genai.configure(api_key=key.strip())
-                model = genai.GenerativeModel("gemini-3.1-pro-preview")
-                model.generate_content("test", request_options={'timeout': 10})
-                return key.strip(), i + 1
-            except Exception:
-                continue
     return None, 0
 
 api_key, active_key_num = get_active_api_key()
@@ -267,29 +249,27 @@ with st.sidebar:
     # Load saved settings from Supabase (once per session)
     if "app_settings_loaded" not in st.session_state:
         saved_settings = mem_mgr.load_settings()
-        st.session_state.saved_keys = saved_settings.get("api_keys", ["", "", ""])
+        # Ensure we always deal with a list of keys
+        st.session_state.saved_keys = saved_settings.get("api_keys", [])
         st.session_state.app_settings_loaded = True
     
-    # API KEY MANAGEMENT (3 keys with priority)
+    # FORMAT CURRENT KEYS FOR TEXT AREA
+    current_keys_text = "\n".join([k for k in st.session_state.saved_keys if k.strip()])
+    
+    # API KEY MANAGEMENT (Infinite Keys)
     with st.expander("🔑 API KEY MANAGEMENT", expanded=not any(st.session_state.saved_keys)):
-        key1_input = st.text_input("KEY #1", 
-            value=st.session_state.saved_keys[0] if len(st.session_state.saved_keys) > 0 else "", 
-            type="password", key="key1_input")
-        key2_input = st.text_input("KEY #2", 
-            value=st.session_state.saved_keys[1] if len(st.session_state.saved_keys) > 1 else "", 
-            type="password", key="key2_input")
-        key3_input = st.text_input("KEY #3", 
-            value=st.session_state.saved_keys[2] if len(st.session_state.saved_keys) > 2 else "", 
-            type="password", key="key3_input")
+        st.caption("Paste your API keys below (one per line). The system will infinitely rotate through them if rate limits are hit.")
+        keys_input = st.text_area("API KEYS", value=current_keys_text, height=150, placeholder="AIzaSy...\nAIzaSy...\nAIzaSy...")
         
         if st.button("💾 SAVE KEYS", key="save_keys_btn", use_container_width=True):
-            new_keys = [key1_input, key2_input, key3_input]
+            # Parse lines into a list, stripping whitespace
+            new_keys = [k.strip() for k in keys_input.split('\n') if k.strip()]
             st.session_state.saved_keys = new_keys
             # Save to Supabase permanently
             settings = mem_mgr.load_settings()
             settings["api_keys"] = new_keys
             if mem_mgr.save_settings(settings):
-                st.success("✅ Keys saved permanently.")
+                st.success(f"✅ {len(new_keys)} Keys saved permanently.")
             else:
                 st.warning("Saved for this session only.")
             time.sleep(1)
