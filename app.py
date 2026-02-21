@@ -454,6 +454,9 @@ with tab1:
         reading_topic = st.text_area("QUERY FOCUS", height=100, placeholder="Specific subject of interrogation...")
         
         st.markdown("<br>", unsafe_allow_html=True)
+        uploaded_image = st.file_uploader("UPLOAD IMAGE (Optional Vision Analysis)", type=["png", "jpg", "jpeg"])
+        
+        st.markdown("<br>", unsafe_allow_html=True)
         
         length_choice = st.radio("DEPTH PROTOCOL", [
             "STANDARD DEPTH (8K CHARS)", 
@@ -517,11 +520,18 @@ with tab1:
                     
                     st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
                     
+                    # Process image if uploaded
+                    pil_image = None
+                    if uploaded_image is not None:
+                        from PIL import Image
+                        pil_image = Image.open(uploaded_image)
+                    
                     raw_text, delivery_msg, usage_stats = brain.run_cycle(
                         order_note, 
                         reading_topic, 
                         client_email=client_email, 
-                        target_length=target_len, 
+                        target_length=target_len,
+                        image_data=pil_image,
                         progress_callback=update_status
                     )
                     
