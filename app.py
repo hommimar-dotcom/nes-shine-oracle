@@ -469,7 +469,14 @@ with tab1:
             target_len = "8000"
         
         st.markdown("<br>", unsafe_allow_html=True)
-        generate_btn = st.button("INITIALIZE PROTOCOL", disabled=not api_key)
+        col_btn1, col_btn2 = st.columns([2, 1])
+        with col_btn1:
+            generate_btn = st.button("INITIALIZE PROTOCOL", disabled=not api_key, use_container_width=True)
+        with col_btn2:
+            if st.button("ABORT & RESET", type="secondary", use_container_width=True):
+                st.session_state.is_generating = False
+                st.session_state.last_status = None
+                st.rerun()
     
     # RIGHT COLUMN: SYSTEM OUTPUT
     with col2:
@@ -846,6 +853,15 @@ with tab3:
                                     st.success("Deleted.")
                                     time.sleep(0.5)
                                     st.rerun()
+                                    
+                        # Display Hidden Session Details
+                        with st.expander("👁️ Show Hidden Session Context"):
+                            st.markdown(f"**Key Prediction:** {session.get('key_prediction', '-')}")
+                            st.markdown(f"**Hook Left:** {session.get('hook_left', '-')}")
+                            st.markdown(f"**Client Mood:** {session.get('client_mood', '-')}")
+                            st.markdown(f"**Promises Made:** {session.get('promises_made', '-')}")
+                            st.markdown(f"**Reading Summary:** {session.get('reading_summary', '-')}")
+                            
                         st.divider()
                 else:
                     st.info("No sessions found.")
