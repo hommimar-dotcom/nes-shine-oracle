@@ -207,9 +207,30 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== LOGIN GATE ====================
+import extra_streamlit_components as stx
+import datetime
+
+@st.cache_resource(experimental_allow_widgets=True)
+def get_cookie_manager():
+    return stx.CookieManager()
+
+cookie_manager = get_cookie_manager()
+time.sleep(0.1) # Small delay for CookieManager initialization
+
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# 1. AUTO-LOGIN CHECK (Remember Me)
+if not st.session_state.authenticated:
+    try:
+        auth_token = cookie_manager.get(cookie="nesshine_auth_token")
+        correct_pass = mem_mgr.load_settings().get("app_password", os.environ.get("APP_PASSWORD", "nesshine2026"))
+        if auth_token and auth_token == correct_pass:
+            st.session_state.authenticated = True
+    except:
+        pass
+
+# 2. LOGIN UI (If auto-login failed)
 if not st.session_state.authenticated:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_login = st.columns([1, 2, 1])[1]
@@ -217,10 +238,15 @@ if not st.session_state.authenticated:
         st.markdown("<h1 style='text-align:center; color:#d4af37;'>NES SHINE</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:#666;'>Sovereign Engine Access</p>", unsafe_allow_html=True)
         login_pass = st.text_input("🔑 ACCESS CODE", type="password", placeholder="Enter system password...")
+        remember_me = st.checkbox("Remember this device (30 Days)", value=True)
+        
         if st.button("AUTHENTICATE", use_container_width=True, type="primary"):
-            correct_pass = os.environ.get("APP_PASSWORD", "nesshine2026")
+            correct_pass = mem_mgr.load_settings().get("app_password", os.environ.get("APP_PASSWORD", "nesshine2026"))
             if login_pass == correct_pass:
                 st.session_state.authenticated = True
+                if remember_me:
+                    # Set cookie for 30 days
+                    cookie_manager.set("nesshine_auth_token", correct_pass, expires_at=datetime.datetime.now() + datetime.timedelta(days=30))
                 st.rerun()
             else:
                 st.error("ACCESS DENIED.")
@@ -274,6 +300,25 @@ with st.sidebar:
                 st.warning("Saved for this session only.")
             time.sleep(1)
             st.rerun()
+            
+    # SECURITY & PASSWORD MANAGEMENT
+    with st.expander("🛡️ SECURITY & ACCESS", expanded=False):
+        st.caption("Update the master system password to lock out unauthorized access.")
+        new_pass_input = st.text_input("New Access Code", type="password")
+        if st.button("UPDATE PASSWORD", use_container_width=True):
+            if new_pass_input.strip():
+                settings = mem_mgr.load_settings()
+                settings["app_password"] = new_pass_input.strip()
+                if mem_mgr.save_settings(settings):
+                    st.success("✅ Password Updated!")
+                    # Update current cookie to prevent immediate lockout
+                    cookie_manager.set("nesshine_auth_token", new_pass_input.strip(), expires_at=datetime.datetime.now() + datetime.timedelta(days=30))
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Database save failed.")
+            else:
+                st.warning("Password cannot be blank.")
     
     # Determine active API keys (COLLECT ALL VALID KEYS)
     valid_keys = [k.strip() for k in st.session_state.saved_keys if k and k.strip()]
