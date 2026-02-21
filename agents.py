@@ -326,18 +326,26 @@ class OracleBrain:
                 self._track_usage(response)
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                print(f"WARNING: Transient error ({type(e).__name__}) on attempt {attempt}. Retrying in 5s...")
+                err_msg = f"API GECİKMESİ ({type(e).__name__}) - Tur {attempt}. 5s bekleyip tekrar deniyor..."
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.InvalidArgument as e:
-                print(f"CRITICAL: Invalid Argument. Model might be blocked. Retrying... Error: {str(e)}")
+                err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.ResourceExhausted:
-                print("WARNING: API Key Exhausted (429). Attempting rotation...")
+                err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
                 original_index = self.current_key_index
                 while True:
                     self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
                     if self.current_key_index == original_index:
-                        print("ALL API KEYS EXHAUSTED. Sleeping 60s before retrying...")
+                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                        print(err_msg_sleep)
+                        if progress_callback: progress_callback(err_msg_sleep)
                         time.sleep(60)
                         break
                     if self.api_keys[self.current_key_index]:
@@ -345,7 +353,7 @@ class OracleBrain:
                         self._reinit_models()
                         break
             except Exception as e:
-                err_msg = f"API GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
+                err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
