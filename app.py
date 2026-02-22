@@ -456,6 +456,12 @@ with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         uploaded_image = st.file_uploader("UPLOAD IMAGE (Optional Vision Analysis)", type=["png", "jpg", "jpeg"])
         
+        # Persist image to prevent Streamlit from wiping it during heavy generation reruns
+        if uploaded_image is not None:
+            st.session_state.uploaded_image_cache = uploaded_image.getvalue()
+        elif "uploaded_image_cache" not in st.session_state:
+            st.session_state.uploaded_image_cache = None
+        
         st.markdown("<br>", unsafe_allow_html=True)
         
         length_choice = st.radio("DEPTH PROTOCOL", [
@@ -520,11 +526,17 @@ with tab1:
                     
                     st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
                     
-                    # Process image if uploaded
+                    # Process image if uploaded (prioritize fresh upload, fallback to cache)
                     pil_image = None
+                    import io
+                    from PIL import Image
+                    
                     if uploaded_image is not None:
-                        from PIL import Image
                         pil_image = Image.open(uploaded_image)
+                        pil_image.thumbnail((1024, 1024))
+                    elif st.session_state.get("uploaded_image_cache") is not None:
+                        pil_image = Image.open(io.BytesIO(st.session_state.uploaded_image_cache))
+                        pil_image.thumbnail((1024, 1024))
                     
                     raw_text, delivery_msg, usage_stats = brain.run_cycle(
                         order_note, 
