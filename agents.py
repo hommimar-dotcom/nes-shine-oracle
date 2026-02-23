@@ -61,7 +61,8 @@ class OracleBrain:
         self.generation_config = genai.types.GenerationConfig(
             temperature=1.3,
             top_p=0.95,
-            top_k=64
+            top_k=64,
+            max_output_tokens=8192,
         )
         
         # SAFETY SETTINGS: BLOCK_NONE (Crucial for Occult/Esoteric topics to not trigger false positives)
@@ -83,6 +84,7 @@ class OracleBrain:
             temperature=0.1, # Low temp specifically to prevent hallucinations
             top_p=0.95,
             top_k=64,
+            max_output_tokens=8192,
         )
         self.extraction_model = genai.GenerativeModel(
             self.REQUIRED_MODEL,
