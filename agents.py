@@ -333,10 +333,32 @@ class OracleBrain:
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.InvalidArgument as e:
-                err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
-                print(err_msg)
-                if progress_callback: progress_callback(err_msg)
-                time.sleep(5)
+                error_str = str(e)
+                if "API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str:
+                    err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    original_index = self.current_key_index
+                    while True:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.current_key_index == original_index:
+                            err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
+                            print(err_msg_sleep)
+                            if progress_callback: progress_callback(err_msg_sleep)
+                            time.sleep(60)
+                            break
+                        if self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            # Force the model reference to update in the loop
+                            target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                            time.sleep(2) # Give the new connection a moment to breathe
+                            break
+                else:
+                    err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    time.sleep(5)
             except exceptions.ResourceExhausted:
                 err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
                 print(err_msg)
@@ -389,8 +411,26 @@ class OracleBrain:
                 print(f"STREAM WARNING: Transient stream error on attempt {attempt}. Retrying in 5s...")
                 time.sleep(5)
             except exceptions.InvalidArgument as e:
-                print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}. Retrying...")
-                time.sleep(5)
+                error_str = str(e)
+                if "API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str:
+                    print("WARNING STREAM: API Key Invalid (400). Attempting rotation...")
+                    original_index = self.current_key_index
+                    while True:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.current_key_index == original_index:
+                            print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
+                            time.sleep(60)
+                            break
+                        if self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            # Force the model reference to update in the loop
+                            target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                            time.sleep(2) # Give the new connection a moment to breathe
+                            break
+                else:
+                    print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
+                    time.sleep(5)
             except exceptions.ResourceExhausted:
                 print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
                 original_index = self.current_key_index
