@@ -353,6 +353,9 @@ class OracleBrain:
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
+                        # Force the model reference to update in the loop
+                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                        time.sleep(2) # Give the new connection a moment to breathe
                         break
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
@@ -400,6 +403,9 @@ class OracleBrain:
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
+                        # Force the model reference to update in the loop
+                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                        time.sleep(2) # Give the new connection a moment to breathe
                         break
             except Exception as e:
                 err_msg = f"YAYIN GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
