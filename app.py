@@ -543,7 +543,6 @@ with tab1:
                         reading_topic, 
                         client_email=client_email, 
                         target_length=target_len,
-                        image_data=pil_image,
                         progress_callback=update_status
                     )
                     
