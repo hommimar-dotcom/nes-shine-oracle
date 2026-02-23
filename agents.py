@@ -324,7 +324,7 @@ class OracleBrain:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                response = target_model.generate_content(prompt, request_options={'timeout': 86400})
+                response = target_model.generate_content(prompt, request_options={'timeout': 1200})
                 self._track_usage(response)
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
@@ -370,7 +370,7 @@ class OracleBrain:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 86400})
+                response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 1200})
                 full_text = ""
                 for chunk in response:
                     full_text += chunk.text
