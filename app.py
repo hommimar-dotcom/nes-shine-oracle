@@ -710,7 +710,7 @@ with tab2:
                     
                     try:
                         brain = OracleBrain(valid_keys)
-                        raw_text, delivery_msg = brain.run_cycle(
+                        raw_text, delivery_msg, usage_stats = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
                             client_email=item["client_email"],
