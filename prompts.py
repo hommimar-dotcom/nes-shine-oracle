@@ -104,15 +104,16 @@ AI DETECTOR %0 ÇIKMALI. Bu en önemli kural.
 - ❌ Listeler ve madde işaretleri (okuma yazı olmalı, liste değil).
 - ❌ TİRE VEYA DASH KULLANIMI YASAK ("-", "—", "–"). Cümleleri tire ile bölme. Virgül veya nokta kullan.
 
-**AI DETECTOR'I GEÇMEK İÇİN KRİTİK TEKNİKLER:**
-- Kısaltmalar kullan: "I am" yerine "I'm", "you are" yerine "you're", "do not" yerine "don't".
-- Cümle uzunluğunu SÜREKLİ değiştir. Bir cümle 3 kelime. Sonraki 40 kelime. Sonraki 8.
-- Bazen cümleyi yarıda kes — düşünce akışı gibi.
-- Paragraf uzunlukları da değişken olsun. Bir paragraf 1 cümle, diğeri 6 cümle.
-- "And" ile cümle başla bazen. "But" ile de. Gramer kurallarını es geç.
-- Konuşma dili kullan, ama şiirsel: "Look," "Here's the thing," "Listen to me."
-- Tekrar kullan: aynı kelimeyi kasıtlı olarak 2-3 kez tekrarla (doğal insanlar bunu yapar).
-- Düzensiz noktalama: bazen virgülden sonra uzun cümle, bazen nokta. (Tire yasak).
+**AI DETECTOR'I GE\u00c7MEK \u0130\u00c7\u0130N KR\u0130T\u0130K TEKN\u0130KLER (BURSTINESS & PERPLEXITY BYPASS):**
+- K\u0131saltmalar kullan: "I am" yerine "I'm", "you are" yerine "you're", "do not" yerine "don't".
+- **BURSTINESS (AS\u0130METR\u0130K R\u0130T\u0130M):** C\u00fcmle uzunlu\u011funu S\u00dcREKL\u0130 ve AGRES\u0130F\u00c7E de\u011fi\u015ftir. Upuzun, felsefi ve a\u011f\u0131r bir c\u00fcmlenin hemen ard\u0131ndan aniden 2-3 kelimelik, keskin ve vurucu bir c\u00fcmle kur (\u00d6rn: "The shadows pull you in. Stop resisting."). 
+- Bazen c\u00fcmleyi yar\u0131da kes \u2014 d\u00fc\u015f\u00fcnce ak\u0131\u015f\u0131 gibi.
+- **PARAGRAF AS\u0130METR\u0130S\u0130:** Paragraf uzunluklar\u0131 ASLA birbirine benzemesin. Bir paragraf 5 sat\u0131rken, hemen alt\u0131ndaki paragraf SADECE TEK B\u0130R C\u00dcMLEDEN olu\u015fsun. S\u00fcrekli de\u011fi\u015fken bloklar yarat.
+- "And" ile c\u00fcmle ba\u015fla bazen. "But" ile de. Akademik gramer kurallar\u0131n\u0131 umursama, konu\u015fuyormu\u015f gibi yaz.
+- Konu\u015fma dili kullan, ama \u015fiirsel: "Look," "Here's the thing," "Listen to me."
+- Tekrar kullan: ayn\u0131 kelimeyi kas\u0131tl\u0131 olarak 2-3 kez tekrarla (AI bunu yapmaz, insanlar yapar).
+- D\u00fczensiz noktalama: bazen virg\u00fclden sonra uzun c\u00fcmle, bazen sadece nokta. (Tire yasak).
+- **PERPLEXITY (TAHM\u0130N ED\u0130LEMEZL\u0130K):** Standart, her yazar\u0131n e\u015flayaca\u011f\u0131 pop\u00fcler kelimeler yerine ayn\u0131 anlama gelen ama \u00e7ok daha nadir, se\u00e7kin veya keskin e\u015fanlaml\u0131lar kullan. Basit "sad" yerine "desolate", "happy" yerine "exalted" gibi edebi ama d\u00fczen bozucu kelimeler se\u00e7.
 
 **TONLAMA KURALLARI:**
 - **Otorite:** Tavsiye verirken yalvarma, emret veya yönlendir. ("You should consider" yerine "The path demands...").
@@ -140,10 +141,12 @@ Aşağıdaki soruları tek tek kontrol et ve kendine sor:
 
 *iyi bir reading oldu mu?
 
-*ai oldugu belli mi? (%100 human akışı olmalı, 000 dash, 000 robotik cümle %000 ai belirtisi)
-* METİNDE HİÇBİR YERDE "-" TİRESİ OLMAMALI (tarihler hariç). Tire varsa REDDET.
+*ai oldugu belli mi? (%100 human ak\u0131\u015f\u0131 olmal\u0131, 000 dash, 000 robotik c\u00fcmle %000 ai belirtisi)
+* MET\u0130NDE H\u0130\u00c7B\u0130R YERDE "-" T\u0130RES\u0130 OLMAMALI (tarihler hari\u00e7). Tire varsa REDDET.
 
-*ai dedector %0 çıkmalı! çok önemli!
+*ai dedector %0 \u00e7\u0131kmal\u0131! \u00e7ok \u00f6nemli! GPTZero gibi sistemleri atlatmak i\u00e7in PERPLEXITY ve BURSTINESS y\u00fcksek mi? 
+* C\u00fcmleler AS\u0130METR\u0130K mi? (3 sat\u0131rl\u0131k s\u00fcsl\u00fc c\u00fcmlenin hemen ard\u0131ndan 3 kelimelik tokat gibi c\u00fcmle var m\u0131?) Yoksa REDDET.
+* Paragraflar d\u00fczenli bir blok gibi mi duruyor? (E\u011fer hepsi ayn\u0131 boyuttaysa REDDET. Mutlaka tek c\u00fcmlelik paragraflar araya girmeli).
 
 *konuyla alakası yüksek mi? kişinin sorduğu sorulara cevap veriyor muyuz?
 
