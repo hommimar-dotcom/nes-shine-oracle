@@ -320,6 +320,7 @@ class OracleBrain:
         import time
         
         attempt = 0
+        keys_attempted = 0
         while True:
             attempt += 1
             try:
@@ -338,22 +339,22 @@ class OracleBrain:
                     err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
-                    original_index = self.current_key_index
-                    while True:
-                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                        if self.current_key_index == original_index:
-                            err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
-                            print(err_msg_sleep)
-                            if progress_callback: progress_callback(err_msg_sleep)
-                            time.sleep(60)
-                            break
-                        if self.api_keys[self.current_key_index]:
-                            self._configure_genai()
-                            self._reinit_models()
-                            # Force the model reference to update in the loop
-                            target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                            time.sleep(2) # Give the new connection a moment to breathe
-                            continue
+                    
+                    if keys_attempted >= len(self.api_keys):
+                        err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
+                        print(err_msg_sleep)
+                        if progress_callback: progress_callback(err_msg_sleep)
+                        time.sleep(60)
+                        keys_attempted = 0
+                        
+                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                    keys_attempted += 1
+                    
+                    if self.api_keys[self.current_key_index]:
+                        self._configure_genai()
+                        self._reinit_models()
+                        time.sleep(2)
+                    continue
                 else:
                     err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
                     print(err_msg)
