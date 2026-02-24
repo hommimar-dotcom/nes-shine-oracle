@@ -1,0 +1,9 @@
+streamlit
+google-generativeai
+python-dotenv
+nest_asyncio
+PyPDF2
+sendgrid
+supabase
+pytz
+extra-streamlit-components
