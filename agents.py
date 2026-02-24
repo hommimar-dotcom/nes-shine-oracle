@@ -363,22 +363,25 @@ class OracleBrain:
                 err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
-                original_index = self.current_key_index
-                while True:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
-                        print(err_msg_sleep)
-                        if progress_callback: progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        break
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        # Force the model reference to update in the loop
-                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                        time.sleep(2) # Give the new connection a moment to breathe
-                        continue
+                
+                # Check if we should sleep before rotating (completed a full cycle)
+                if keys_attempted >= len(self.api_keys):
+                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    keys_attempted = 0
+                
+                # Rotate Key
+                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                keys_attempted += 1
+                
+                # Re-init Google models with the new key
+                if self.api_keys[self.current_key_index]:
+                    self._configure_genai()
+                    self._reinit_models()
+                    time.sleep(2)
+                continue
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
@@ -438,7 +441,7 @@ class OracleBrain:
                         self._configure_genai()
                         self._reinit_models()
                         time.sleep(2)
-                        continue
+                    continue
                 else:
                     print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
                     time.sleep(5)
