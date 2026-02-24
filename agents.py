@@ -318,6 +318,7 @@ class OracleBrain:
         import time
         
         attempt = 0
+        keys_attempted = 0
         while True:
             attempt += 1
             try:
@@ -339,19 +340,22 @@ class OracleBrain:
                 err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
-                original_index = self.current_key_index
-                while True:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
-                        print(err_msg_sleep)
-                        if progress_callback: progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        break
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        break
+                keys_attempted += 1
+                
+                if keys_attempted >= len(self.api_keys):
+                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    keys_attempted = 0
+                    
+                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                
+                if self.api_keys[self.current_key_index]:
+                    self._configure_genai()
+                    self._reinit_models()
+                    time.sleep(2)
+                continue
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
@@ -364,6 +368,7 @@ class OracleBrain:
         import time
         
         attempt = 0
+        keys_attempted = 0
         while True:
             attempt += 1
             try:
@@ -388,17 +393,20 @@ class OracleBrain:
                 time.sleep(5)
             except exceptions.ResourceExhausted:
                 print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
-                original_index = self.current_key_index
-                while True:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
-                        time.sleep(60)
-                        break
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        break
+                keys_attempted += 1
+                
+                if keys_attempted >= len(self.api_keys):
+                    print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
+                    time.sleep(60)
+                    keys_attempted = 0
+                    
+                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                
+                if self.api_keys[self.current_key_index]:
+                    self._configure_genai()
+                    self._reinit_models()
+                    time.sleep(2)
+                continue
             except Exception as e:
                 err_msg = f"YAYIN GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
