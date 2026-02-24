@@ -367,10 +367,12 @@ class OracleBrain:
                         target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                         time.sleep(5)
                 else:
-                    err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
+                    err_msg = f"KONTROL HATASI: {error_str[:200]}"
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
-                    time.sleep(5)
+                    # We should NOT retry if the prompt itself is invalid or the model name is wrong. 
+                    # If we retry, we just get stuck in an infinite loop. We must abort and surface the error.
+                    raise e
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
@@ -431,8 +433,8 @@ class OracleBrain:
                         self._reinit_models()
                         time.sleep(2)
                 else:
-                    print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
-                    time.sleep(5)
+                    print(f"CRITICAL STREAM KONTROL HATASI: Invalid Argument: {error_str}. Aborting...")
+                    raise e
             except Exception as e:
                 err_msg = f"YAYIN GEC\u0130KMES\u0130/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
