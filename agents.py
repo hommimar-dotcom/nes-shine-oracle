@@ -340,6 +340,8 @@ class OracleBrain:
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
                     
+                    keys_attempted += 1
+                    
                     if keys_attempted >= len(self.api_keys):
                         err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
                         print(err_msg_sleep)
@@ -348,7 +350,6 @@ class OracleBrain:
                         keys_attempted = 0
                         
                     self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    keys_attempted += 1
                     
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
@@ -365,6 +366,8 @@ class OracleBrain:
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 
+                keys_attempted += 1
+                
                 # Check if we should sleep before rotating (completed a full cycle)
                 if keys_attempted >= len(self.api_keys):
                     err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
@@ -375,7 +378,6 @@ class OracleBrain:
                 
                 # Rotate Key
                 self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                keys_attempted += 1
                 
                 # Re-init Google models with the new key
                 if self.api_keys[self.current_key_index]:
@@ -429,7 +431,6 @@ class OracleBrain:
                     
                     print(err_msg)
                     
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
                     keys_attempted += 1
                     
                     if keys_attempted >= len(self.api_keys):
@@ -437,6 +438,8 @@ class OracleBrain:
                         print(err_msg_sleep)
                         time.sleep(60)
                         keys_attempted = 0
+                        
+                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
                     
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
