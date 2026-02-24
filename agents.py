@@ -61,8 +61,7 @@ class OracleBrain:
         self.generation_config = genai.types.GenerationConfig(
             temperature=1.3,
             top_p=0.95,
-            top_k=64,
-            max_output_tokens=8192,
+            top_k=64
         )
         
         # SAFETY SETTINGS: BLOCK_NONE (Crucial for Occult/Esoteric topics to not trigger false positives)
@@ -84,7 +83,6 @@ class OracleBrain:
             temperature=0.1, # Low temp specifically to prevent hallucinations
             top_p=0.95,
             top_k=64,
-            max_output_tokens=8192,
         )
         self.extraction_model = genai.GenerativeModel(
             self.REQUIRED_MODEL,
@@ -324,7 +322,7 @@ class OracleBrain:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                response = target_model.generate_content(prompt, request_options={'timeout': 1200})
+                response = target_model.generate_content(prompt, request_options={'timeout': 100000})
                 self._track_usage(response)
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
@@ -333,32 +331,10 @@ class OracleBrain:
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.InvalidArgument as e:
-                error_str = str(e)
-                if "API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str:
-                    err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
-                    print(err_msg)
-                    if progress_callback: progress_callback(err_msg)
-                    original_index = self.current_key_index
-                    while True:
-                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                        if self.current_key_index == original_index:
-                            err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
-                            print(err_msg_sleep)
-                            if progress_callback: progress_callback(err_msg_sleep)
-                            time.sleep(60)
-                            break
-                        if self.api_keys[self.current_key_index]:
-                            self._configure_genai()
-                            self._reinit_models()
-                            # Force the model reference to update in the loop
-                            target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                            time.sleep(2) # Give the new connection a moment to breathe
-                            break
-                else:
-                    err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
-                    print(err_msg)
-                    if progress_callback: progress_callback(err_msg)
-                    time.sleep(5)
+                err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
+                time.sleep(5)
             except exceptions.ResourceExhausted:
                 err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
                 print(err_msg)
@@ -375,9 +351,6 @@ class OracleBrain:
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
-                        # Force the model reference to update in the loop
-                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                        time.sleep(2) # Give the new connection a moment to breathe
                         break
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
@@ -391,12 +364,11 @@ class OracleBrain:
         import time
         
         attempt = 0
-        keys_attempted = 0
         while True:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 1200})
+                response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 100000})
                 full_text = ""
                 for chunk in response:
                     full_text += chunk.text
@@ -407,42 +379,28 @@ class OracleBrain:
                         self._track_usage(response)
                 except:
                     pass
-                keys_attempted = 0
                 return
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 print(f"STREAM WARNING: Transient stream error on attempt {attempt}. Retrying in 5s...")
                 time.sleep(5)
-            except (exceptions.InvalidArgument, exceptions.ResourceExhausted) as e:
-                error_str = str(e)
-                is_invalid = isinstance(e, exceptions.InvalidArgument) and ("API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str)
-                is_exhausted = isinstance(e, exceptions.ResourceExhausted)
-                
-                if is_invalid or is_exhausted:
-                    if is_invalid:
-                        err_msg = "WARNING STREAM: API Key Invalid (400). Attempting rotation..."
-                    else:
-                        err_msg = "WARNING STREAM: API Key Exhausted (429). Attempting rotation..."
-                    
-                    print(err_msg)
-                    
+            except exceptions.InvalidArgument as e:
+                print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}. Retrying...")
+                time.sleep(5)
+            except exceptions.ResourceExhausted:
+                print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
+                original_index = self.current_key_index
+                while True:
                     self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    keys_attempted += 1
-                    
-                    if keys_attempted >= len(self.api_keys):
-                        err_msg_sleep = "ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying..."
-                        print(err_msg_sleep)
+                    if self.current_key_index == original_index:
+                        print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
                         time.sleep(60)
-                        keys_attempted = 0
-                    
+                        break
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
-                        time.sleep(2)
-                else:
-                    print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
-                    time.sleep(5)
+                        break
             except Exception as e:
-                err_msg = f"YAYIN GEC\u0130KMES\u0130/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
+                err_msg = f"YAYIN GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(10)

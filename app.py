@@ -210,10 +210,9 @@ st.markdown("""
 import extra_streamlit_components as stx
 import datetime
 
+@st.cache_resource
 def get_cookie_manager():
-    if "cookie_manager" not in st.session_state:
-        st.session_state.cookie_manager = stx.CookieManager()
-    return st.session_state.cookie_manager
+    return stx.CookieManager()
 
 cookie_manager = get_cookie_manager()
 time.sleep(0.1) # Small delay for CookieManager initialization
@@ -544,6 +543,7 @@ with tab1:
                         reading_topic, 
                         client_email=client_email, 
                         target_length=target_len,
+                        image_data=pil_image,
                         progress_callback=update_status
                     )
                     
@@ -711,7 +711,7 @@ with tab2:
                     
                     try:
                         brain = OracleBrain(valid_keys)
-                        raw_text, delivery_msg, usage_stats = brain.run_cycle(
+                        raw_text, delivery_msg = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
                             client_email=item["client_email"],
