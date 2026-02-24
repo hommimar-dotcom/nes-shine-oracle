@@ -353,7 +353,7 @@ class OracleBrain:
                             # Force the model reference to update in the loop
                             target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                             time.sleep(2) # Give the new connection a moment to breathe
-                            break
+                            continue
                 else:
                     err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
                     print(err_msg)
@@ -378,7 +378,7 @@ class OracleBrain:
                         # Force the model reference to update in the loop
                         target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                         time.sleep(2) # Give the new connection a moment to breathe
-                        break
+                        continue
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
@@ -438,6 +438,7 @@ class OracleBrain:
                         self._configure_genai()
                         self._reinit_models()
                         time.sleep(2)
+                        continue
                 else:
                     print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
                     time.sleep(5)
