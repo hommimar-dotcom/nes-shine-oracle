@@ -320,57 +320,65 @@ class OracleBrain:
         import time
         
         attempt = 0
-        keys_attempted = 0
         while True:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                 response = target_model.generate_content(prompt, request_options={'timeout': 1200})
                 self._track_usage(response)
-                keys_attempted = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 err_msg = f"API GECİKMESİ ({type(e).__name__}) - Tur {attempt}. 5s bekleyip tekrar deniyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
-            except (exceptions.InvalidArgument, exceptions.ResourceExhausted) as e:
+            except exceptions.InvalidArgument as e:
                 error_str = str(e)
-                is_invalid = isinstance(e, exceptions.InvalidArgument) and ("API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str)
-                is_exhausted = isinstance(e, exceptions.ResourceExhausted)
-                
-                if is_invalid or is_exhausted:
-                    if is_invalid:
-                        err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
-                    else:
-                        err_msg = "API Limiti (429). Yedek Anahtara Ge\u00e7iliyor..."
-                    
+                if "API_KEY_INVALID" in error_str or "API KEY EXPIRED" in error_str:
+                    err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
-                    
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    keys_attempted += 1
-                    
-                    if keys_attempted >= len(self.api_keys):
-                        err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
-                        print(err_msg_sleep)
-                        if progress_callback: progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        keys_attempted = 0
-                        
-                        # Once we waited 60s, reset the overall attempt counter so it doesn't give up completely
-                        attempt = 0
-                    
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                        time.sleep(5)
+                    original_index = self.current_key_index
+                    while True:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.current_key_index == original_index:
+                            err_msg_sleep = "T\u00dcM ANAHTARLAR T\u00dcKEND\u0130. 60s bekleniyor..."
+                            print(err_msg_sleep)
+                            if progress_callback: progress_callback(err_msg_sleep)
+                            time.sleep(60)
+                            break
+                        if self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            # Force the model reference to update in the loop
+                            target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                            time.sleep(2) # Give the new connection a moment to breathe
+                            break
                 else:
                     err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
                     time.sleep(5)
+            except exceptions.ResourceExhausted:
+                err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
+                print(err_msg)
+                if progress_callback: progress_callback(err_msg)
+                original_index = self.current_key_index
+                while True:
+                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                    if self.current_key_index == original_index:
+                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                        print(err_msg_sleep)
+                        if progress_callback: progress_callback(err_msg_sleep)
+                        time.sleep(60)
+                        break
+                    if self.api_keys[self.current_key_index]:
+                        self._configure_genai()
+                        self._reinit_models()
+                        # Force the model reference to update in the loop
+                        target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+                        time.sleep(2) # Give the new connection a moment to breathe
+                        break
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
