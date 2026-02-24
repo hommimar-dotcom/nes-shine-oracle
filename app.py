@@ -210,10 +210,9 @@ st.markdown("""
 import extra_streamlit_components as stx
 import datetime
 
+@st.cache_resource
 def get_cookie_manager():
-    if "cookie_manager" not in st.session_state:
-        st.session_state.cookie_manager = stx.CookieManager()
-    return st.session_state.cookie_manager
+    return stx.CookieManager()
 
 cookie_manager = get_cookie_manager()
 time.sleep(0.1) # Small delay for CookieManager initialization
@@ -455,6 +454,15 @@ with tab1:
         reading_topic = st.text_area("QUERY FOCUS", height=100, placeholder="Specific subject of interrogation...")
         
         st.markdown("<br>", unsafe_allow_html=True)
+        uploaded_image = st.file_uploader("UPLOAD IMAGE (Optional Vision Analysis)", type=["png", "jpg", "jpeg"])
+        
+        # Persist image to prevent Streamlit from wiping it during heavy generation reruns
+        if uploaded_image is not None:
+            st.session_state.uploaded_image_cache = uploaded_image.getvalue()
+        elif "uploaded_image_cache" not in st.session_state:
+            st.session_state.uploaded_image_cache = None
+        
+        st.markdown("<br>", unsafe_allow_html=True)
         
         length_choice = st.radio("DEPTH PROTOCOL", [
             "STANDARD DEPTH (8K CHARS)", 
@@ -518,11 +526,23 @@ with tab1:
                     
                     st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
                     
+                    # Process image if uploaded (prioritize fresh upload, fallback to cache)
+                    pil_image = None
+                    import io
+                    from PIL import Image
+                    
+                    if uploaded_image is not None:
+                        pil_image = Image.open(uploaded_image)
+                        pil_image.thumbnail((1024, 1024))
+                    elif st.session_state.get("uploaded_image_cache") is not None:
+                        pil_image = Image.open(io.BytesIO(st.session_state.uploaded_image_cache))
+                        pil_image.thumbnail((1024, 1024))
+                    
                     raw_text, delivery_msg, usage_stats = brain.run_cycle(
                         order_note, 
                         reading_topic, 
                         client_email=client_email, 
-                        target_length=target_len, 
+                        target_length=target_len,
                         progress_callback=update_status
                     )
                     
@@ -690,7 +710,7 @@ with tab2:
                     
                     try:
                         brain = OracleBrain(valid_keys)
-                        raw_text, delivery_msg = brain.run_cycle(
+                        raw_text, delivery_msg, usage_stats = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
                             client_email=item["client_email"],
