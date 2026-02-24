@@ -357,12 +357,15 @@ class OracleBrain:
                         if progress_callback: progress_callback(err_msg_sleep)
                         time.sleep(60)
                         keys_attempted = 0
+                        
+                        # Once we waited 60s, reset the overall attempt counter so it doesn't give up completely
+                        attempt = 0
                     
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
                         target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                        time.sleep(2)
+                        time.sleep(5)
                 else:
                     err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
                     print(err_msg)
