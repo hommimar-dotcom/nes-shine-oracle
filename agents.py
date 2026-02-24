@@ -7,7 +7,7 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
-    REQUIRED_MODEL = "gemini-2.5-pro"
+    REQUIRED_MODEL = "gemini-3.1-pro-preview"
     
     # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
     PRICE_INPUT_PER_M = 2.00
@@ -341,9 +341,9 @@ class OracleBrain:
                 
                 if is_invalid or is_exhausted:
                     if is_invalid:
-                        err_msg = f"API Anahtar\u0131 Ge\u00e7ersiz (400): {error_str[:100]}"
+                        err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
                     else:
-                        err_msg = f"API LIMITI (429): {error_str[:100]} - Yedek Anahtara..."
+                        err_msg = "API Limiti (429). Yedek Anahtara Ge\u00e7iliyor..."
                     
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
@@ -367,12 +367,10 @@ class OracleBrain:
                         target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                         time.sleep(5)
                 else:
-                    err_msg = f"KONTROL HATASI: {error_str[:200]}"
+                    err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {error_str[:100]}"
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
-                    # We should NOT retry if the prompt itself is invalid or the model name is wrong. 
-                    # If we retry, we just get stuck in an infinite loop. We must abort and surface the error.
-                    raise e
+                    time.sleep(5)
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
@@ -413,9 +411,9 @@ class OracleBrain:
                 
                 if is_invalid or is_exhausted:
                     if is_invalid:
-                        err_msg = f"WARNING STREAM: API Key Invalid (400): {error_str[:100]}"
+                        err_msg = "WARNING STREAM: API Key Invalid (400). Attempting rotation..."
                     else:
-                        err_msg = f"WARNING STREAM: API Key Exhausted (429): {error_str[:100]}"
+                        err_msg = "WARNING STREAM: API Key Exhausted (429). Attempting rotation..."
                     
                     print(err_msg)
                     
@@ -433,8 +431,8 @@ class OracleBrain:
                         self._reinit_models()
                         time.sleep(2)
                 else:
-                    print(f"CRITICAL STREAM KONTROL HATASI: Invalid Argument: {error_str}. Aborting...")
-                    raise e
+                    print(f"CRITICAL STREAM ERROR: Invalid Argument: {error_str}. Retrying...")
+                    time.sleep(5)
             except Exception as e:
                 err_msg = f"YAYIN GEC\u0130KMES\u0130/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
