@@ -7,7 +7,7 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
-    REQUIRED_MODEL = "gemini-3.1-pro-preview"
+    REQUIRED_MODEL = "gemini-1.5-pro"
     
     # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
     PRICE_INPUT_PER_M = 2.00
@@ -341,9 +341,9 @@ class OracleBrain:
                 
                 if is_invalid or is_exhausted:
                     if is_invalid:
-                        err_msg = "API Anahtar\u0131 Ge\u00e7ersiz/S\u00fcresi Dolmu\u015f (400). Yedek Anahtara Ge\u00e7iliyor..."
+                        err_msg = f"API Anahtar\u0131 Ge\u00e7ersiz (400): {error_str[:100]}"
                     else:
-                        err_msg = "API Limiti (429). Yedek Anahtara Ge\u00e7iliyor..."
+                        err_msg = f"API LIMITI (429): {error_str[:100]} - Yedek Anahtara..."
                     
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
@@ -413,9 +413,9 @@ class OracleBrain:
                 
                 if is_invalid or is_exhausted:
                     if is_invalid:
-                        err_msg = "WARNING STREAM: API Key Invalid (400). Attempting rotation..."
+                        err_msg = f"WARNING STREAM: API Key Invalid (400): {error_str[:100]}"
                     else:
-                        err_msg = "WARNING STREAM: API Key Exhausted (429). Attempting rotation..."
+                        err_msg = f"WARNING STREAM: API Key Exhausted (429): {error_str[:100]}"
                     
                     print(err_msg)
                     
