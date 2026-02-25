@@ -294,15 +294,22 @@ class OracleBrain:
                 
                 # AUDIO GENERATION (only if requested)
                 audio_path = None
+                audio_cost = None
                 if generate_audio:
                     if progress_callback: progress_callback("Ses üretiliyor (ElevenLabs)...")
                     try:
                         from audio_service import AudioService
                         audio_svc = AudioService()
                         audio_filename = f"{client_name.replace(' ', '_').lower()}_{int(time.time())}.mp3"
-                        audio_path = audio_svc.generate_audio(draft, output_filename=audio_filename)
+                        audio_path, audio_cost = audio_svc.generate_audio(
+                            draft,
+                            output_filename=audio_filename,
+                            progress_callback=progress_callback
+                        )
                         if progress_callback and audio_path:
-                            progress_callback("Ses dosyası hazır.")
+                            chars = audio_cost.get('characters_billed', 0) if audio_cost else 0
+                            chunks = audio_cost.get('chunks', 0) if audio_cost else 0
+                            progress_callback(f"Ses hazır. {chars} karakter, {chunks} parça.")
                     except Exception as e:
                         print(f"AUDIO ERROR: {e}")
                         if progress_callback: progress_callback("Ses üretilemedi, metin teslim edilecek.")
