@@ -210,11 +210,7 @@ st.markdown("""
 import extra_streamlit_components as stx
 import datetime
 
-@st.cache_resource
-def get_cookie_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_cookie_manager()
+cookie_manager = stx.CookieManager()
 time.sleep(0.1) # Small delay for CookieManager initialization
 
 if "authenticated" not in st.session_state:
