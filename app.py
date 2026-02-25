@@ -316,6 +316,42 @@ with st.sidebar:
             else:
                 st.warning("Password cannot be blank.")
     
+    # ELEVENLABS AUDIO CONFIGURATION
+    with st.expander("🎙️ ELEVENLABS AUDIO", expanded=False):
+        st.caption("ElevenLabs API key and Voice ID for audio readings.")
+        
+        # Load saved ElevenLabs settings
+        if "el_settings_loaded" not in st.session_state:
+            saved_settings = mem_mgr.load_settings()
+            st.session_state.el_api_key = saved_settings.get("elevenlabs_api_key", "")
+            st.session_state.el_voice_id = saved_settings.get("elevenlabs_voice_id", "")
+            st.session_state.el_settings_loaded = True
+        
+        el_key_input = st.text_input("API KEY", value=st.session_state.el_api_key, type="password", placeholder="sk_...")
+        el_voice_input = st.text_input("VOICE ID", value=st.session_state.el_voice_id, placeholder="bD9maN...")
+        
+        if st.button("💾 SAVE ELEVENLABS", key="save_el_btn", use_container_width=True):
+            settings = mem_mgr.load_settings()
+            settings["elevenlabs_api_key"] = el_key_input.strip()
+            settings["elevenlabs_voice_id"] = el_voice_input.strip()
+            st.session_state.el_api_key = el_key_input.strip()
+            st.session_state.el_voice_id = el_voice_input.strip()
+            # Also set as environment variables for AudioService
+            os.environ["ELEVENLABS_API_KEY"] = el_key_input.strip()
+            os.environ["ELEVENLABS_VOICE_ID"] = el_voice_input.strip()
+            if mem_mgr.save_settings(settings):
+                st.success("✅ ElevenLabs settings saved.")
+            else:
+                st.warning("Saved for this session only.")
+            time.sleep(1)
+            st.rerun()
+        
+        # Auto-load saved keys into environment on startup
+        if st.session_state.el_api_key:
+            os.environ["ELEVENLABS_API_KEY"] = st.session_state.el_api_key
+        if st.session_state.el_voice_id:
+            os.environ["ELEVENLABS_VOICE_ID"] = st.session_state.el_voice_id
+    
     # Determine active API keys (COLLECT ALL VALID KEYS)
     valid_keys = [k.strip() for k in st.session_state.saved_keys if k and k.strip()]
     api_key = valid_keys[0] if valid_keys else None
