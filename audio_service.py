@@ -123,7 +123,7 @@ class AudioService:
         if not self.voice_id:
             raise ValueError("ELEVENLABS_VOICE_ID not set.")
 
-        self.model = "eleven_turbo_v2_5"
+        self.model = "eleven_multilingual_v2"
 
     def generate_audio(self, html_text, output_filename="reading.mp3"):
         """
