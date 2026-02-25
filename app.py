@@ -476,6 +476,8 @@ with tab1:
             target_len = "13000"
         else:
             target_len = "8000"
+        st.markdown("<br>", unsafe_allow_html=True)
+        audio_reading = st.checkbox("🎙️ AUDIO READING (+$6 ElevenLabs)", value=False, help="Sesli okuma üretir. İşaretlemezsen normal metin okuması yapılır.")
         
         st.markdown("<br>", unsafe_allow_html=True)
         col_btn1, col_btn2 = st.columns([2, 1])
@@ -497,6 +499,8 @@ with tab1:
             st.session_state.pdf_path = None
         if "delivery_msg" not in st.session_state:
             st.session_state.delivery_msg = None
+        if "audio_path" not in st.session_state:
+            st.session_state.audio_path = None
         if "last_status" not in st.session_state:
             st.session_state.last_status = None
         if "is_generating" not in st.session_state:
@@ -538,17 +542,18 @@ with tab1:
                         pil_image = Image.open(io.BytesIO(st.session_state.uploaded_image_cache))
                         pil_image.thumbnail((1024, 1024))
                     
-                    raw_text, delivery_msg, usage_stats = brain.run_cycle(
+                    raw_text, delivery_msg, usage_stats, audio_path = brain.run_cycle(
                         order_note, 
                         reading_topic, 
                         client_email=client_email, 
                         target_length=target_len,
-                        image_data=pil_image,
+                        generate_audio=audio_reading,
                         progress_callback=update_status
                     )
                     
                     
                     st.session_state.delivery_msg = delivery_msg
+                    st.session_state.audio_path = audio_path
                     st.session_state.last_usage = usage_stats
                     
                     # 2. FORMAT HTML
@@ -607,6 +612,21 @@ with tab1:
                             file_name=os.path.basename(st.session_state.pdf_path),
                             mime="text/html"
                         )
+            
+            # AUDIO PLAYER (only if audio was generated)
+            if st.session_state.get("audio_path") and os.path.exists(st.session_state.audio_path):
+                st.markdown("---")
+                st.markdown("<h3 style='text-align:center; color:#d4af37;'>🎧 PUT ON YOUR HEADPHONES</h3>", unsafe_allow_html=True)
+                st.markdown("<p style='text-align:center; color:#888; font-style:italic;'>Nes Shine is ready to speak.</p>", unsafe_allow_html=True)
+                with open(st.session_state.audio_path, "rb") as af:
+                    st.audio(af.read(), format="audio/mp3")
+                st.download_button(
+                    label="DOWNLOAD AUDIO [MP3]",
+                    data=open(st.session_state.audio_path, "rb"),
+                    file_name=os.path.basename(st.session_state.audio_path),
+                    mime="audio/mpeg",
+                    key="download_audio_btn"
+                )
             
             # DELIVERY MESSAGE
             if st.session_state.delivery_msg:

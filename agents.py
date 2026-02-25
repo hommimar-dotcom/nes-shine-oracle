@@ -221,11 +221,12 @@ class OracleBrain:
             # Clean up the feedback to be ready for the medium
             return False, feedback
 
-    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", progress_callback=None):
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", generate_audio=False, progress_callback=None):
         """
         Runs the full generation loop with Memory Integration.
-        client_email: Client's email address (e.g., "jessica@gmail.com") - used as memory key for 100% accuracy
-        Returns: (reading_text, delivery_msg, usage_stats)
+        client_email: Client's email address - used as memory key for 100% accuracy
+        generate_audio: If True, generates MP3 via ElevenLabs after approval.
+        Returns: (reading_text, delivery_msg, usage_stats, audio_path)
         """
         from memory import MemoryManager
         mem_mgr = MemoryManager()
@@ -291,11 +292,26 @@ class OracleBrain:
                 except Exception as e:
                     print(f"USAGE SAVE ERROR: {e}")
                 
+                # AUDIO GENERATION (only if requested)
+                audio_path = None
+                if generate_audio:
+                    if progress_callback: progress_callback("Ses üretiliyor (ElevenLabs)...")
+                    try:
+                        from audio_service import AudioService
+                        audio_svc = AudioService()
+                        audio_filename = f"{client_name.replace(' ', '_').lower()}_{int(time.time())}.mp3"
+                        audio_path = audio_svc.generate_audio(draft, output_filename=audio_filename)
+                        if progress_callback and audio_path:
+                            progress_callback("Ses dosyası hazır.")
+                    except Exception as e:
+                        print(f"AUDIO ERROR: {e}")
+                        if progress_callback: progress_callback("Ses üretilemedi, metin teslim edilecek.")
+                
                 # DELIVERY MESSAGE
                 if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")
                 delivery_msg = self.generate_delivery_message(client_name, reading_topic)
                 
-                return draft, delivery_msg, self.usage_stats
+                return draft, delivery_msg, self.usage_stats, audio_path
             
             draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, progress_callback=progress_callback)
     
