@@ -18,6 +18,7 @@ class HTMLStripper(HTMLParser):
         self.result = []
         self._current_tag = None
         self._skip_tags = {"style", "script"}
+        self._heading = False
         self._skip = False
 
     def handle_starttag(self, tag, attrs):
@@ -30,8 +31,10 @@ class HTMLStripper(HTMLParser):
 
         if tag == "h1":
             self.result.append("\n\n")
+            self._heading = True
         elif tag == "h2":
             self.result.append("\n\n...\n\n")
+            self._heading = True
 
         if "chantblock" in classes:
             self.result.append("\n\n...\n\n")
@@ -47,12 +50,12 @@ class HTMLStripper(HTMLParser):
         if tag == "p":
             self.result.append("\n\n")
         elif tag in ("h1", "h2"):
-            self.result.append(".\n\n")
+            self._heading = False
 
         self._current_tag = None
 
     def handle_data(self, data):
-        if self._skip:
+        if self._skip or self._heading:
             return
         if self._current_tag in self._skip_tags:
             return
