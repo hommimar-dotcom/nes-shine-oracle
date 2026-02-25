@@ -312,7 +312,9 @@ class OracleBrain:
                             progress_callback(f"Ses hazır. {chars} karakter, {chunks} parça.")
                     except Exception as e:
                         print(f"AUDIO ERROR: {e}")
-                        if progress_callback: progress_callback("Ses üretilemedi, metin teslim edilecek.")
+                        import traceback
+                        traceback.print_exc()
+                        if progress_callback: progress_callback(f"AUDIO HATASI: {str(e)[:200]}")
                 
                 # DELIVERY MESSAGE
                 if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")

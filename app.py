@@ -588,6 +588,13 @@ with tab1:
                     st.session_state.audio_path = audio_path
                     st.session_state.last_usage = usage_stats
                     
+                    # Debug: show audio result
+                    if audio_reading:
+                        if audio_path:
+                            update_status(f"SES DOSYASI HAZIR: {audio_path}")
+                        else:
+                            update_status("SES URETILEMEDI - RAILWAY LOGLARINI KONTROL ET")
+                    
                     # 2. FORMAT HTML
                     update_status("COMPILING HTML ARCHITECTURE...")
                     final_content = raw_text
