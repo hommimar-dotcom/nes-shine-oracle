@@ -343,11 +343,48 @@ class OracleBrain:
         import time
         
         attempt = 0
+        blocked_retries = 0
+        max_blocked_retries = 5
         while True:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                 response = target_model.generate_content(prompt, request_options={'timeout': 100000})
+                
+                # CHECK FOR BLOCKED/EMPTY RESPONSE
+                if not response.candidates:
+                    blocked_retries += 1
+                    block_reason = "UNKNOWN"
+                    try:
+                        block_reason = str(response.prompt_feedback)
+                    except:
+                        pass
+                    
+                    if blocked_retries >= max_blocked_retries:
+                        # After max retries, try rotating API key
+                        err_msg = f"İÇERİK BLOKU {blocked_retries}x TEKRARLANDI. Anahtar değiştiriliyor..."
+                        print(err_msg)
+                        if progress_callback: progress_callback(err_msg)
+                        original_index = self.current_key_index
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.current_key_index != original_index and self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            blocked_retries = 0  # Reset counter for new key
+                        else:
+                            err_msg = f"TÜM ANAHTARLAR BLOKLU. 30s bekleniyor..."
+                            print(err_msg)
+                            if progress_callback: progress_callback(err_msg)
+                            time.sleep(30)
+                            blocked_retries = 0
+                        continue
+                    
+                    err_msg = f"İÇERİK BLOKU (Tur {blocked_retries}/{max_blocked_retries}): {block_reason[:80]}. 5s sonra tekrar deniyor..."
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    time.sleep(5)
+                    continue
+                
                 self._track_usage(response)
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:

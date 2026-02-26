@@ -468,8 +468,8 @@ with st.sidebar:
 st.title("NES SHINE // ORACLE ENGINE v3.2")
 st.markdown("---")
 
-# TABS FOR SINGLE VS BATCH
-tab1, tab2, tab3 = st.tabs(["SINGLE READING", "BATCH QUEUE", "CLIENT VAULT"])
+# TABS FOR SINGLE VS BATCH + SPELL ENGINE
+tab1, tab2, tab3, tab4 = st.tabs(["SINGLE READING", "BATCH QUEUE", "CLIENT VAULT", "🔮 SPELL ENGINE"])
 
 # TAB 1: SINGLE READING (Original Interface)
 with tab1:
@@ -1005,5 +1005,10 @@ with tab3:
                     st.rerun()
                 except Exception as e:
                     st.error(f"Import failed: {str(e)}")
+
+# TAB 4: SPELL ENGINE
+with tab4:
+    from spell_page import render_spell_page
+    render_spell_page(valid_keys, mem_mgr)
 
 # FORCE REDEPLOY CHECK
