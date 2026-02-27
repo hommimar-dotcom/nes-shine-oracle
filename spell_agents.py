@@ -21,7 +21,7 @@ class SpellBrain:
     """
     
     PRIMARY_MODEL = "gemini-3.1-pro-preview"
-    FALLBACK_MODEL = "gemini-3.0-pro"
+    FALLBACK_MODEL = "gemini-3-pro-preview"
     PRICE_INPUT_PER_M = 2.00
     PRICE_OUTPUT_PER_M = 12.00
     

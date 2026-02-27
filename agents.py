@@ -8,7 +8,7 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
     PRIMARY_MODEL = "gemini-3.1-pro-preview"
-    FALLBACK_MODEL = "gemini-3.0-pro"
+    FALLBACK_MODEL = "gemini-3-pro-preview"
     
     # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
     PRICE_INPUT_PER_M = 2.00
