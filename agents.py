@@ -438,6 +438,10 @@ class OracleBrain:
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
+                        
+                        msg_active = f"Anahtar {self.current_key_index + 1} ile üretim yapılıyor (Lütfen bekleyin)..."
+                        print(msg_active)
+                        if progress_callback: progress_callback(msg_active)
                         break
             except Exception as e:
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
