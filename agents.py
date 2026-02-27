@@ -346,6 +346,7 @@ class OracleBrain:
         
         attempt = 0
         blocked_retries = 0
+        consecutive_exhaustions = 0
         max_blocked_retries = 5
         while True:
             attempt += 1
@@ -388,6 +389,7 @@ class OracleBrain:
                     continue
                 
                 self._track_usage(response)
+                consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 err_msg = f"API GECİKMESİ ({type(e).__name__}) - Tur {attempt}. 5s bekleyip tekrar deniyor..."
@@ -400,18 +402,21 @@ class OracleBrain:
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.ResourceExhausted:
-                err_msg = "API Limiti (429). Yedek Anahtara Geçiliyor..."
+                consecutive_exhaustions += 1
+                if consecutive_exhaustions >= len(self.api_keys):
+                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    consecutive_exhaustions = 0
+                    continue
+                
+                err_msg = f"API Limiti (429). Yedek Anahtara Geçiliyor... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
-                original_index = self.current_key_index
+                
                 while True:
                     self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
-                        print(err_msg_sleep)
-                        if progress_callback: progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        break
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()

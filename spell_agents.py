@@ -383,12 +383,14 @@ class SpellBrain:
         from google.api_core import exceptions
         
         attempt = 0
+        consecutive_exhaustions = 0
         while True:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                 response = target_model.generate_content(prompt, request_options={'timeout': 100000})
                 self._track_usage(response)
+                consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 err_msg = f"SPELL API DELAY ({type(e).__name__}) — Round {attempt}. Retrying in 5s..."
@@ -403,20 +405,23 @@ class SpellBrain:
                     progress_callback(err_msg)
                 time.sleep(5)
             except exceptions.ResourceExhausted:
-                err_msg = "API Limit (429). Rotating to backup key..."
+                consecutive_exhaustions += 1
+                if consecutive_exhaustions >= len(self.api_keys):
+                    err_msg_sleep = "ALL KEYS EXHAUSTED. Waiting 60s..."
+                    print(err_msg_sleep)
+                    if progress_callback:
+                        progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    consecutive_exhaustions = 0
+                    continue
+
+                err_msg = f"API Limit (429). Rotating to backup key... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)
                 if progress_callback:
                     progress_callback(err_msg)
-                original_index = self.current_key_index
+                
                 while True:
                     self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        err_msg_sleep = "ALL KEYS EXHAUSTED. Waiting 60s..."
-                        print(err_msg_sleep)
-                        if progress_callback:
-                            progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        break
                     if self.api_keys[self.current_key_index]:
                         self._configure_genai()
                         self._reinit_models()
