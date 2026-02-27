@@ -20,13 +20,15 @@ class SpellBrain:
     Uses the SAME API key rotation and retry logic.
     """
     
-    REQUIRED_MODEL = "gemini-3.1-pro-preview"
+    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    FALLBACK_MODEL = "gemini-3.0-pro-preview"
     PRICE_INPUT_PER_M = 2.00
     PRICE_OUTPUT_PER_M = 12.00
     
     def __init__(self, api_keys):
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
+        self.current_model_name = self.PRIMARY_MODEL
         self._reset_usage_stats()
         self._configure_genai()
     
@@ -78,7 +80,7 @@ class SpellBrain:
         }
         
         self.model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.generation_config,
             safety_settings=self.safety_settings
         )
@@ -90,7 +92,7 @@ class SpellBrain:
             top_k=64,
         )
         self.extraction_model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
@@ -407,13 +409,30 @@ class SpellBrain:
             except exceptions.ResourceExhausted:
                 consecutive_exhaustions += 1
                 if consecutive_exhaustions >= len(self.api_keys):
-                    err_msg_sleep = "ALL KEYS EXHAUSTED. Waiting 60s..."
-                    print(err_msg_sleep)
-                    if progress_callback:
-                        progress_callback(err_msg_sleep)
-                    time.sleep(60)
-                    consecutive_exhaustions = 0
-                    continue
+                    if self.current_model_name == self.PRIMARY_MODEL:
+                        err_msg_fallback = f"ALL KEYS EXHAUSTED FOR {self.PRIMARY_MODEL}. Falling back to {self.FALLBACK_MODEL}..."
+                        print(err_msg_fallback)
+                        if progress_callback:
+                            progress_callback(err_msg_fallback)
+                        
+                        self.current_model_name = self.FALLBACK_MODEL
+                        self._configure_genai()
+                        self._reinit_models()
+                        consecutive_exhaustions = 0
+                        continue
+                    else:
+                        err_msg_sleep = "ALL KEYS AND MODELS EXHAUSTED. Waiting 60s..."
+                        print(err_msg_sleep)
+                        if progress_callback:
+                            progress_callback(err_msg_sleep)
+                        time.sleep(60)
+                        consecutive_exhaustions = 0
+                        
+                        if self.current_model_name != self.PRIMARY_MODEL:
+                            self.current_model_name = self.PRIMARY_MODEL
+                            self._configure_genai()
+                            self._reinit_models()
+                        continue
 
                 err_msg = f"API Limit (429). Rotating to backup key... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)
@@ -435,12 +454,12 @@ class SpellBrain:
 
     def _reinit_models(self):
         self.model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.generation_config,
             safety_settings=self.safety_settings
         )
         self.extraction_model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )

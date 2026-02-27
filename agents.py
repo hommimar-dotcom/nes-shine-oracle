@@ -7,7 +7,8 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
-    REQUIRED_MODEL = "gemini-3.1-pro-preview"
+    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    FALLBACK_MODEL = "gemini-3.0-pro-preview"
     
     # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
     PRICE_INPUT_PER_M = 2.00
@@ -16,6 +17,7 @@ class OracleBrain:
     def __init__(self, api_keys):
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
+        self.current_model_name = self.PRIMARY_MODEL
         self._reset_usage_stats()
         self._configure_genai()
     
@@ -75,7 +77,7 @@ class OracleBrain:
         }
         
         self.model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.generation_config,
             safety_settings=self.safety_settings
         )
@@ -87,7 +89,7 @@ class OracleBrain:
             top_k=64,
         )
         self.extraction_model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
@@ -404,12 +406,28 @@ class OracleBrain:
             except exceptions.ResourceExhausted:
                 consecutive_exhaustions += 1
                 if consecutive_exhaustions >= len(self.api_keys):
-                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
-                    print(err_msg_sleep)
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    time.sleep(60)
-                    consecutive_exhaustions = 0
-                    continue
+                    if self.current_model_name == self.PRIMARY_MODEL:
+                        err_msg_fallback = f"TÜM ANAHTARLAR {self.PRIMARY_MODEL} İÇİN TÜKENDİ. Yedek model {self.FALLBACK_MODEL} deneniyor..."
+                        print(err_msg_fallback)
+                        if progress_callback: progress_callback(err_msg_fallback)
+                        
+                        self.current_model_name = self.FALLBACK_MODEL
+                        self._configure_genai()
+                        self._reinit_models()
+                        consecutive_exhaustions = 0
+                        continue
+                    else:
+                        err_msg_sleep = "TÜM ANAHTARLAR VE MODELLER TÜKENDİ. 60s bekleniyor..."
+                        print(err_msg_sleep)
+                        if progress_callback: progress_callback(err_msg_sleep)
+                        time.sleep(60)
+                        consecutive_exhaustions = 0
+                        # Revert back to primary to see if quota reset after sleeping
+                        if self.current_model_name != self.PRIMARY_MODEL:
+                            self.current_model_name = self.PRIMARY_MODEL
+                            self._configure_genai()
+                            self._reinit_models()
+                        continue
                 
                 err_msg = f"API Limiti (429). Yedek Anahtara Geçiliyor... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)
@@ -476,12 +494,12 @@ class OracleBrain:
 
     def _reinit_models(self):
         self.model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.generation_config,
             safety_settings=self.safety_settings
         )
         self.extraction_model = genai.GenerativeModel(
-            self.REQUIRED_MODEL,
+            self.current_model_name,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
