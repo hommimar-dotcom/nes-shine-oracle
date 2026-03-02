@@ -509,13 +509,9 @@ with tab1:
         else:
             target_len = "8000"
         st.markdown("<br>", unsafe_allow_html=True)
-        model_choice = st.radio("AI CORE MODEL", [
-            "gemini-3.1-pro-preview (Slower, Higher Quality)", 
-            "gemini-3-pro-preview (Faster, Stable)"
-        ], horizontal=False)
-        
-        # Parse the actual API model name from the choice
-        selected_model_api = "gemini-3.1-pro-preview" if "3.1" in model_choice else "gemini-3-pro-preview"
+        st.markdown("<br>", unsafe_allow_html=True)
+        # SADECE 3.1 PRO (Arayüz seçimi kaldırıldı)
+        selected_model_api = "gemini-3.1-pro-preview"
         
         st.markdown("<br>", unsafe_allow_html=True)
         audio_reading = st.checkbox("🎙️ AUDIO READING (+$6 ElevenLabs)", value=False, help="Sesli okuma üretir. İşaretlemezsen normal metin okuması yapılır.")
@@ -823,10 +819,7 @@ with tab2:
             q_topic = st.text_input("Topic", placeholder="Love, Career...")
             q_note = st.text_area("Notes", placeholder="Context...", height=100)
             q_length = st.selectbox("Depth", ["8000", "12000"])
-            q_model = st.radio("AI CORE MODEL", [
-                "gemini-3.1-pro-preview", 
-                "gemini-3-pro-preview"
-            ], horizontal=False)
+            q_model = "gemini-3.1-pro-preview" # Form arkasında sabitlendi
             
             if st.form_submit_button("ADD TO QUEUE", use_container_width=True):
                 if q_email and q_topic:

@@ -19,9 +19,8 @@ class SpellBrain:
     Mirrors OracleBrain architecture but focused on spell/ritual operations.
     Uses the SAME API key rotation and retry logic.
     """
-    
+    # SADECE 3.1 PRO (Kalite için taviz verilmeyecek)
     PRIMARY_MODEL = "gemini-3.1-pro-preview"
-    FALLBACK_MODEL = "gemini-3-pro-preview"
     PRICE_INPUT_PER_M = 2.00
     PRICE_OUTPUT_PER_M = 12.00
     
@@ -399,25 +398,12 @@ class SpellBrain:
                 consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
-                err_msg = f"API OVERLOAD/TIMEOUT {self.current_model_name} ({type(e).__name__}). Switching model..."
-                print(err_msg)
+                err_msg_sleep = f"API CONGESTED ({type(e).__name__}). Waiting 15s..."
+                print(err_msg_sleep)
                 if progress_callback:
-                    progress_callback(err_msg)
-                
-                # Immediately fallback to stable model instead of looping
-                if self.current_model_name == self.PRIMARY_MODEL:
-                    self.current_model_name = self.FALLBACK_MODEL
-                    self._configure_genai()
-                    self._reinit_models()
-                    continue
-                else:
-                    err_msg_sleep = "Models congested. Waiting 15s..."
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    time.sleep(15)
-                    self.current_model_name = self.PRIMARY_MODEL
-                    self._configure_genai()
-                    self._reinit_models()
-                    continue
+                    progress_callback(err_msg_sleep)
+                time.sleep(15)
+                continue
                     
             except exceptions.InvalidArgument as e:
                 err_msg = f"SPELL VALIDATION ERROR (Invalid Argument). Retrying in 5s... {str(e)[:100]}"
@@ -429,30 +415,13 @@ class SpellBrain:
             except exceptions.ResourceExhausted:
                 consecutive_exhaustions += 1
                 if consecutive_exhaustions >= len(self.api_keys):
-                    if self.current_model_name == self.PRIMARY_MODEL:
-                        err_msg_fallback = f"ALL KEYS EXHAUSTED FOR {self.PRIMARY_MODEL}. Falling back to {self.FALLBACK_MODEL}..."
-                        print(err_msg_fallback)
-                        if progress_callback:
-                            progress_callback(err_msg_fallback)
-                        
-                        self.current_model_name = self.FALLBACK_MODEL
-                        self._configure_genai()
-                        self._reinit_models()
-                        consecutive_exhaustions = 0
-                        continue
-                    else:
-                        err_msg_sleep = "ALL KEYS AND MODELS EXHAUSTED. Waiting 60s..."
-                        print(err_msg_sleep)
-                        if progress_callback:
-                            progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        consecutive_exhaustions = 0
-                        
-                        if self.current_model_name != self.PRIMARY_MODEL:
-                            self.current_model_name = self.PRIMARY_MODEL
-                            self._configure_genai()
-                            self._reinit_models()
-                        continue
+                    err_msg_sleep = "ALL KEYS EXHAUSTED. Waiting 60s..."
+                    print(err_msg_sleep)
+                    if progress_callback:
+                        progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    consecutive_exhaustions = 0
+                    continue
 
                 err_msg = f"API Limit (429). Rotating to backup key... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)

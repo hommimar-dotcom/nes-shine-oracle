@@ -102,6 +102,11 @@ def render_spell_page(valid_keys, mem_mgr):
         
         st.markdown("<br>", unsafe_allow_html=True)
         
+        # SADECE 3.1 PRO (Arayüz seçimi kaldırıldı)
+        selected_spell_model_api = "gemini-3.1-pro-preview"
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         # ==================== PHASE BUTTONS ====================
         
         # PHASE 1: Start Diagnostic
@@ -163,6 +168,11 @@ def render_spell_page(valid_keys, mem_mgr):
         if st.session_state.spell_phase == "running_diagnostic":
             try:
                 brain = SpellBrain(valid_keys)
+                if selected_spell_model_api != brain.current_model_name:
+                    update_spell_status(f"Model Yapılandırılıyor: {selected_spell_model_api}...")
+                    brain.current_model_name = selected_spell_model_api
+                    brain._configure_genai()
+                    brain._reinit_models()
                 
                 # Load memory context
                 memory_context = ""
@@ -215,6 +225,11 @@ def render_spell_page(valid_keys, mem_mgr):
         if st.session_state.spell_phase == "running_generation":
             try:
                 brain = SpellBrain(valid_keys)
+                if selected_spell_model_api != brain.current_model_name:
+                    update_spell_status(f"Model Yapılandırılıyor: {selected_spell_model_api}...")
+                    brain.current_model_name = selected_spell_model_api
+                    brain._configure_genai()
+                    brain._reinit_models()
                 
                 st.markdown("### 🔮 RITUAL INSCRIPTION ACTIVE (Stand By)")
                 

@@ -8,7 +8,6 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 class OracleBrain:
     # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
     PRIMARY_MODEL = "gemini-3.1-pro-preview"
-    FALLBACK_MODEL = "gemini-3-pro-preview"
     
     # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
     PRICE_INPUT_PER_M = 2.00
@@ -403,24 +402,11 @@ class OracleBrain:
                 consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
-                err_msg = f"API GECİKMESİ/HATA ({type(e).__name__}) - Tur {attempt}. Model değiştiriliyor..."
-                print(err_msg)
-                if progress_callback: progress_callback(err_msg)
-                
-                # Immediately fallback to stable model instead of looping
-                if self.current_model_name == self.PRIMARY_MODEL:
-                    self.current_model_name = self.FALLBACK_MODEL
-                    self._configure_genai()
-                    self._reinit_models()
-                    continue
-                else:
-                    err_msg_sleep = "MODELLER YOĞUN (15s bekliyor)..."
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    time.sleep(15)
-                    self.current_model_name = self.PRIMARY_MODEL
-                    self._configure_genai()
-                    self._reinit_models()
-                    continue
+                err_msg_sleep = f"API YOĞUN ({type(e).__name__}) - Tur {attempt}. 15s bekleniyor..."
+                print(err_msg_sleep)
+                if progress_callback: progress_callback(err_msg_sleep)
+                time.sleep(15)
+                continue
                     
             except exceptions.InvalidArgument as e:
                 err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
@@ -430,28 +416,12 @@ class OracleBrain:
             except exceptions.ResourceExhausted:
                 consecutive_exhaustions += 1
                 if consecutive_exhaustions >= len(self.api_keys):
-                    if self.current_model_name == self.PRIMARY_MODEL:
-                        err_msg_fallback = f"TÜM ANAHTARLAR {self.PRIMARY_MODEL} İÇİN TÜKENDİ. Yedek model {self.FALLBACK_MODEL} deneniyor..."
-                        print(err_msg_fallback)
-                        if progress_callback: progress_callback(err_msg_fallback)
-                        
-                        self.current_model_name = self.FALLBACK_MODEL
-                        self._configure_genai()
-                        self._reinit_models()
-                        consecutive_exhaustions = 0
-                        continue
-                    else:
-                        err_msg_sleep = "TÜM ANAHTARLAR VE MODELLER TÜKENDİ. 60s bekleniyor..."
-                        print(err_msg_sleep)
-                        if progress_callback: progress_callback(err_msg_sleep)
-                        time.sleep(60)
-                        consecutive_exhaustions = 0
-                        # Revert back to primary to see if quota reset after sleeping
-                        if self.current_model_name != self.PRIMARY_MODEL:
-                            self.current_model_name = self.PRIMARY_MODEL
-                            self._configure_genai()
-                            self._reinit_models()
-                        continue
+                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(60)
+                    consecutive_exhaustions = 0
+                    continue
                 
                 err_msg = f"API Limiti (429). Yedek Anahtara Geçiliyor... ({consecutive_exhaustions}/{len(self.api_keys)})"
                 print(err_msg)
