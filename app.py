@@ -509,6 +509,15 @@ with tab1:
         else:
             target_len = "8000"
         st.markdown("<br>", unsafe_allow_html=True)
+        model_choice = st.radio("AI CORE MODEL", [
+            "gemini-3.1-pro-preview (Slower, Higher Quality)", 
+            "gemini-3-pro-preview (Faster, Stable)"
+        ], horizontal=False)
+        
+        # Parse the actual API model name from the choice
+        selected_model_api = "gemini-3.1-pro-preview" if "3.1" in model_choice else "gemini-3-pro-preview"
+        
+        st.markdown("<br>", unsafe_allow_html=True)
         audio_reading = st.checkbox("🎙️ AUDIO READING (+$6 ElevenLabs)", value=False, help="Sesli okuma üretir. İşaretlemezsen normal metin okuması yapılır.")
         
         st.markdown("<br>", unsafe_allow_html=True)
@@ -539,7 +548,7 @@ with tab1:
             st.session_state.is_generating = False
     
         # Show persisted status on rerun (survives page interactions)
-        if st.session_state.last_status and not generate_btn:
+        if st.session_state.last_status:
             st.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
     
         if generate_btn and api_key:
@@ -548,6 +557,9 @@ with tab1:
             else:
                 brain = OracleBrain(valid_keys)
                 st.session_state.is_generating = True
+                st.session_state.final_html = None
+                st.session_state.delivery_msg = None
+                st.session_state.audio_path = None
                 st.session_state.last_status = "INITIALIZING..."
                 status_container = st.empty()
                 
@@ -580,6 +592,7 @@ with tab1:
                         client_email=client_email, 
                         target_length=target_len,
                         generate_audio=audio_reading,
+                        model_choice=selected_model_api,
                         progress_callback=update_status
                     )
                     
@@ -628,9 +641,8 @@ with tab1:
                     
                     update_status("PROTOCOL COMPLETE")
                     st.session_state.is_generating = False
-                    st.session_state.last_status = None
+                    st.session_state.last_status = "PROTOCOL COMPLETE — READING READY"
                     time.sleep(1)
-                    status_container.empty()
                     
                 except Exception as e:
                     st.session_state.is_generating = False
@@ -770,11 +782,12 @@ with tab2:
                     
                     try:
                         brain = OracleBrain(valid_keys)
-                        raw_text, delivery_msg = brain.run_cycle(
+                        raw_text, delivery_msg, usage_stats, audio_path = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
                             client_email=item["client_email"],
-                            target_length=item["target_length"]
+                            target_length=item["target_length"],
+                            model_choice=item.get("model_choice", "gemini-3.1-pro-preview") # STRICT FALLBACK TO HQ MODEL
                         )
                         
                         # Generate PDF
@@ -810,10 +823,14 @@ with tab2:
             q_topic = st.text_input("Topic", placeholder="Love, Career...")
             q_note = st.text_area("Notes", placeholder="Context...", height=100)
             q_length = st.selectbox("Depth", ["8000", "12000"])
+            q_model = st.radio("AI CORE MODEL", [
+                "gemini-3.1-pro-preview", 
+                "gemini-3-pro-preview"
+            ], horizontal=False)
             
             if st.form_submit_button("ADD TO QUEUE", use_container_width=True):
                 if q_email and q_topic:
-                    queue_mgr.add_to_queue(q_email, q_note, q_topic, q_length)
+                    queue_mgr.add_to_queue(q_email, q_note, q_topic, q_length, q_model)
                     st.success("Added!")
                     time.sleep(0.5)
                     st.rerun()

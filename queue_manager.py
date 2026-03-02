@@ -42,7 +42,7 @@ class QueueManager:
             with open(self.queue_file, 'w') as f:
                 json.dump({"queue": [], "completed": []}, f)
     
-    def add_to_queue(self, client_email, order_note, reading_topic, target_length="8000"):
+    def add_to_queue(self, client_email, order_note, reading_topic, target_length="8000", model_choice="gemini-3.1-pro-preview"):
         """Adds a new reading request to the queue."""
         new_item = {
             "id": datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -50,6 +50,7 @@ class QueueManager:
             "order_note": order_note,
             "reading_topic": reading_topic,
             "target_length": target_length,
+            "model_choice": model_choice, # Must force saving to DB
             "status": "pending",
             "added_at": datetime.now().isoformat(),
             "completed_at": None,
@@ -61,9 +62,17 @@ class QueueManager:
                 self.supabase.table("reading_queue").insert(new_item).execute()
                 return new_item["id"]
             except Exception as e:
-                print(f"DB Error: {e}")
-                # Fallback to file? keeping it simple for now
-                return None
+                print(f"DB Error (Possibly missing model_choice column): {e}")
+                # Fallback to saving WITHOUT model_choice if schema is old
+                try:
+                    fallback_item = new_item.copy()
+                    del fallback_item["model_choice"]
+                    self.supabase.table("reading_queue").insert(fallback_item).execute()
+                    print("Saved to DB using fallback schema (no model_choice).")
+                    return new_item["id"]
+                except Exception as e2:
+                    print(f"Fatal DB Error on fallback: {e2}")
+                    return None
         
         # LOCAL FILE FALLBACK
         with open(self.queue_file, 'r') as f:
