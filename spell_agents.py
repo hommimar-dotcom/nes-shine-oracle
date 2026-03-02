@@ -309,6 +309,7 @@ class SpellBrain:
         
         # 3. QC LOOP — INFINITE until 100% approval
         iteration = 0
+        qc_feedback_history = []
         while True:
             iteration += 1
             if progress_callback:
@@ -364,11 +365,14 @@ class SpellBrain:
                 return draft, delivery_msg, self.usage_stats, audio_path
             
             # Revision needed
+            qc_feedback_history.append(f"--- FAILED ATTEMPT {iteration} --- \n{review_notes}")
+            cumulative_feedback = "\n\n".join(qc_feedback_history)
+            
             if progress_callback:
-                progress_callback(f"QC Round {iteration} — Revisions required. Spell Architect rewriting...")
+                progress_callback(f"QC Round {iteration} — Revisions required. Spell Architect rewriting with {len(qc_feedback_history)} past feedback constraints...")
             draft = self.spell_architect(
                 client_note, requested_work, approved_spells, diagnostic_report,
-                target_length, memory_context, feedback=review_notes,
+                target_length, memory_context, feedback=cumulative_feedback,
                 progress_callback=progress_callback
             )
 
@@ -394,18 +398,34 @@ class SpellBrain:
                 self._track_usage(response)
                 consecutive_exhaustions = 0
                 return response
-            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                err_msg = f"SPELL API DELAY ({type(e).__name__}) — Round {attempt}. Retrying in 5s..."
+            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
+                err_msg = f"API OVERLOAD/TIMEOUT {self.current_model_name} ({type(e).__name__}). Switching model..."
                 print(err_msg)
                 if progress_callback:
                     progress_callback(err_msg)
-                time.sleep(5)
+                
+                # Immediately fallback to stable model instead of looping
+                if self.current_model_name == self.PRIMARY_MODEL:
+                    self.current_model_name = self.FALLBACK_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                else:
+                    err_msg_sleep = "Models congested. Waiting 15s..."
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(15)
+                    self.current_model_name = self.PRIMARY_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                    
             except exceptions.InvalidArgument as e:
                 err_msg = f"SPELL VALIDATION ERROR (Invalid Argument). Retrying in 5s... {str(e)[:100]}"
                 print(err_msg)
                 if progress_callback:
                     progress_callback(err_msg)
                 time.sleep(5)
+                
             except exceptions.ResourceExhausted:
                 consecutive_exhaustions += 1
                 if consecutive_exhaustions >= len(self.api_keys):

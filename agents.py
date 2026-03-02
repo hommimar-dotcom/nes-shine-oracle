@@ -225,13 +225,22 @@ class OracleBrain:
             # Clean up the feedback to be ready for the medium
             return False, feedback
 
-    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", generate_audio=False, progress_callback=None):
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", generate_audio=False, model_choice=None, progress_callback=None):
         """
         Runs the full generation loop with Memory Integration.
         client_email: Client's email address - used as memory key for 100% accuracy
         generate_audio: If True, generates MP3 via ElevenLabs after approval.
+        model_choice: The specific Gemini model to use for this generation.
         Returns: (reading_text, delivery_msg, usage_stats, audio_path)
         """
+        
+        # 0. APPLY MODEL SELECTION IF PROVIDED
+        if model_choice and model_choice != self.current_model_name:
+            if progress_callback: progress_callback(f"Model Yapılandırılıyor: {model_choice}...")
+            self.current_model_name = model_choice
+            self._configure_genai()
+            self._reinit_models()
+            
         from memory import MemoryManager
         mem_mgr = MemoryManager()
         self._reset_usage_stats()
@@ -393,11 +402,26 @@ class OracleBrain:
                 self._track_usage(response)
                 consecutive_exhaustions = 0
                 return response
-            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                err_msg = f"API GECİKMESİ ({type(e).__name__}) - Tur {attempt}. 5s bekleyip tekrar deniyor..."
+            except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
+                err_msg = f"API GECİKMESİ/HATA ({type(e).__name__}) - Tur {attempt}. Model değiştiriliyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
-                time.sleep(5)
+                
+                # Immediately fallback to stable model instead of looping
+                if self.current_model_name == self.PRIMARY_MODEL:
+                    self.current_model_name = self.FALLBACK_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                else:
+                    err_msg_sleep = "MODELLER YOĞUN (15s bekliyor)..."
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(15)
+                    self.current_model_name = self.PRIMARY_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                    
             except exceptions.InvalidArgument as e:
                 err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
                 print(err_msg)
