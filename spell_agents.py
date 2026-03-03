@@ -243,13 +243,16 @@ class SpellBrain:
 
     # ==================== DELIVERY MESSAGE ====================
     def generate_delivery_message(self, client_name, work_type):
+        import re
         try:
             prompt = SPELL_DELIVERY_PROMPT.format(
                 client_name=client_name,
                 work_type=work_type
             )
             response = self.generate_with_retry(self.model, prompt)
-            return response.text.strip()
+            clean_text = response.text.strip()
+            clean_text = re.sub(r'<[^>]+>', '', clean_text).strip()
+            return clean_text
         except Exception as e:
             return f"The work is done. Take a quiet moment before you open this. Everything has been set in motion. — Nes"
 

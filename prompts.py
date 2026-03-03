@@ -191,7 +191,7 @@ KURALLAR:
 - Nes Shine'ın tonunda: sıcak ama otoriter, mistik ama samimi.
 - Okumayı okumasını ve enerjisini açık tutmasını söyle.
 - Sonda "Nes" veya "Nes Shine" ile imzala.
-
+- Kesinlikle HTML kodları, <p>, <b>, <div> gibi etiketler KULLANMA. Sadece DÜZ METİN (Plain Text) yaz.
 Sadece mesajı yaz, başka bir şey ekleme.
 """
 

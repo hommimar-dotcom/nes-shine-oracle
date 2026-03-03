@@ -343,8 +343,9 @@ class OracleBrain:
             draft = self.medium_agent(order_note, reading_topic, target_length, memory_context, feedback=review_notes, progress_callback=progress_callback)
     
     def generate_delivery_message(self, client_name, reading_topic):
-        """Generates a short delivery message for the client."""
+        """Generates a short delivery message for the client, stripping any rogue HTML."""
         from prompts import DELIVERY_MESSAGE_PROMPT
+        import re
         try:
             prompt = DELIVERY_MESSAGE_PROMPT.format(
                 client_name=client_name,
@@ -352,7 +353,10 @@ class OracleBrain:
             )
             # Use Main Creative Model with Retry
             response = self.generate_with_retry(self.model, prompt)
-            return response.text.strip()
+            clean_text = response.text.strip()
+            # Strip any HTML tags that the AI might have hallucinated
+            clean_text = re.sub(r'<[^>]+>', '', clean_text).strip()
+            return clean_text
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
     def generate_with_retry(self, model, prompt, progress_callback=None):
