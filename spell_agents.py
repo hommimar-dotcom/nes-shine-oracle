@@ -393,7 +393,7 @@ class SpellBrain:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
-                response = target_model.generate_content(prompt, request_options={'timeout': 150})
+                response = target_model.generate_content(prompt, request_options={'timeout': 300})
                 self._track_usage(response)
                 consecutive_exhaustions = 0
                 return response
