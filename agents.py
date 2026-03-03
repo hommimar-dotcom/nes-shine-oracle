@@ -17,6 +17,7 @@ class OracleBrain:
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
         self.current_model_name = self.PRIMARY_MODEL
+        self.FALLBACK_MODEL = "gemini-3.0-pro"  # Fail-safe model
         self._reset_usage_stats()
         self._configure_genai()
     
@@ -292,6 +293,11 @@ class OracleBrain:
             
             approved, review_notes = self.grandmaster_agent(draft, order_note, target_length, progress_callback=progress_callback)
             
+            if approved and iteration < 4:
+                approved = False
+                review_notes = "Metin teknik olarak onaylanabilir düzeyde, ancak yeterince ruh ve derinlik barındırmıyor. Mistik detayları, duyusal betimlemeleri ve Nes Shine'ın imzası olan otoriter, karanlık enerjiyi çok daha fazla hissettirerek metni GENİŞLET ve BAŞTAN YAZ. Bu bir asgari kalite testidir, henüz mükemmel değil."
+                if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/4). Metin Derinleştiriliyor...")
+
             if approved:
                 self.usage_stats["qc_rounds"] = iteration
                 if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
@@ -404,11 +410,22 @@ class OracleBrain:
                 consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
-                err_msg_sleep = f"API YOĞUN ({type(e).__name__}) - Tur {attempt}. 15s bekleniyor..."
-                print(err_msg_sleep)
-                if progress_callback: progress_callback(err_msg_sleep)
-                time.sleep(15)
-                continue
+                if self.current_model_name != self.FALLBACK_MODEL:
+                    # Switch to 3.0 Pro fallback if 3.1 Pro backend crashes / times out
+                    err_msg_sleep = f"Google 3.1 PRO ÇÖKTÜ ({type(e).__name__}). 3.0 PRO Yedeğine Geçiliyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    
+                    self.current_model_name = self.FALLBACK_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                else:
+                    err_msg_sleep = f"API YOĞUN ({type(e).__name__}) - Tur {attempt}. 15s bekleniyor..."
+                    print(err_msg_sleep)
+                    if progress_callback: progress_callback(err_msg_sleep)
+                    time.sleep(15)
+                    continue
                     
             except exceptions.InvalidArgument as e:
                 err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
@@ -468,8 +485,15 @@ class OracleBrain:
                     pass
                 return
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
-                print(f"STREAM WARNING: Transient stream error on attempt {attempt}. Retrying in 5s...")
-                time.sleep(5)
+                if self.current_model_name != self.FALLBACK_MODEL:
+                    print(f"STREAM GOOGLE 3.1 ÇOKTÜ ({type(e).__name__}). 3.0 YEDEĞİNE GEÇİLİYOR...")
+                    self.current_model_name = self.FALLBACK_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                else:
+                    print(f"STREAM WARNING: Transient stream error on attempt {attempt}. Retrying in 5s...")
+                    time.sleep(5)
             except exceptions.InvalidArgument as e:
                 print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}. Retrying...")
                 time.sleep(5)

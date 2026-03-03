@@ -28,6 +28,7 @@ class SpellBrain:
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
         self.current_model_name = self.PRIMARY_MODEL
+        self.FALLBACK_MODEL = "gemini-3.0-pro"  # Fail-safe model
         self._reset_usage_stats()
         self._configure_genai()
     
@@ -318,6 +319,12 @@ class SpellBrain:
                 draft, client_note, requested_work, progress_callback=progress_callback
             )
             
+            if approved and iteration < 4:
+                approved = False
+                review_notes = "Büyü ritüeli teknik olarak onaylanabilir düzeyde, ancak antik dil kullanımı, betimlemeler ve okült derinlik açısından henüz Kusursuz değil. Mistik detayları ve enerjik aktarımı çok daha fazla güçlendirerek ritüeli GENİŞLET ve BAŞTAN YAZ. Bu bir asgari kalite testidir."
+                if progress_callback:
+                    progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/4). Ritüel Derinleştiriliyor...")
+
             if approved:
                 self.usage_stats["qc_rounds"] = iteration
                 if progress_callback:
@@ -398,12 +405,23 @@ class SpellBrain:
                 consecutive_exhaustions = 0
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
-                err_msg_sleep = f"API CONGESTED ({type(e).__name__}). Waiting 15s..."
-                print(err_msg_sleep)
-                if progress_callback:
-                    progress_callback(err_msg_sleep)
-                time.sleep(15)
-                continue
+                if self.current_model_name != self.FALLBACK_MODEL:
+                    err_msg_sleep = f"SPELL GOOGLE 3.1 ÇÖKTÜ ({type(e).__name__}). 3.0 PRO YEDEĞİNE GEÇİLİYOR..."
+                    print(err_msg_sleep)
+                    if progress_callback:
+                        progress_callback(err_msg_sleep)
+                    
+                    self.current_model_name = self.FALLBACK_MODEL
+                    self._configure_genai()
+                    self._reinit_models()
+                    continue
+                else:
+                    err_msg_sleep = f"API CONGESTED ({type(e).__name__}). Waiting 15s..."
+                    print(err_msg_sleep)
+                    if progress_callback:
+                        progress_callback(err_msg_sleep)
+                    time.sleep(15)
+                    continue
                     
             except exceptions.InvalidArgument as e:
                 err_msg = f"SPELL VALIDATION ERROR (Invalid Argument). Retrying in 5s... {str(e)[:100]}"
