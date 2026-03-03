@@ -17,7 +17,7 @@ class OracleBrain:
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
         self.current_model_name = self.PRIMARY_MODEL
-        self.FALLBACK_MODEL = "gemini-3.0-pro"  # Fail-safe model
+        self.FALLBACK_MODEL = "gemini-3-pro-preview"  # Fail-safe model
         self._reset_usage_stats()
         self._configure_genai()
     
