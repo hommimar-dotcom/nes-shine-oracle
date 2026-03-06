@@ -177,7 +177,7 @@ class SpellBrain:
     # ==================== AGENT 4: GRANDMASTER SPELL QC ====================
     def grandmaster_spell_qc(self, ritual_text, client_note, requested_work, progress_callback=None):
         """
-        15-point quality control. Returns (bool, string) -> (IS_APPROVED, FEEDBACK)
+        18-point quality control. Returns (bool, string) -> (IS_APPROVED, FEEDBACK)
         """
         prompt = SPELL_QC_PROMPT.format(
             ritual_text=ritual_text,
@@ -186,7 +186,7 @@ class SpellBrain:
         )
         
         if progress_callback:
-            progress_callback("Grandmaster QC evaluating ritual text (15 criteria)...")
+            progress_callback("Grandmaster QC evaluating ritual text (18 criteria)...")
         
         response = self.generate_with_retry(self.extraction_model, prompt, progress_callback=progress_callback)
         feedback = response.text.strip()
