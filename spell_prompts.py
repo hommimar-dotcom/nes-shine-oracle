@@ -526,6 +526,7 @@ LANGUAGE RULES:
 - Write like a human: varied sentence lengths, conversational yet wise, zero AI patterns
 - Use original ancient language terms naturally woven into the text
 - Minimum 15,000 characters of pure text content (excluding HTML and whitespace)
+- UNGOOGLEABLE OCCULTISM: Do not invent generic Wiccan concepts or new age terms. The rituals you describe must sound like they've been pulled from dusty, forbidden grimoires. Emphasize raw materials (bone, blood, grave dirt, iron, ancient incense) and ancient mechanics. 
 - AI Detector must read 0%. This is non-negotiable.
 
 BANNED WORDS AND PATTERNS:
@@ -641,34 +642,42 @@ SPELL_ARCHITECT_PROMPT = """
 --- YOUR MISSION ---
 Write the COMPLETE RITUAL DOCUMENT for this client. This is the final deliverable.
 
-THE DOCUMENT MUST HAVE TWO MAIN SECTIONS:
+THE DOCUMENT MUST FOLLOW THIS EXACT 6-PART STRUCTURE:
 
-SECTION 1: "WHAT I HAVE DONE FOR YOU"
-- Describe in vivid, authoritative detail the rituals YOU (Nes Shine) have performed
-- Include the ancient language incantations you used (in their original languages)
-- Describe the materials, the timing, the atmosphere
-- Make the client FEEL that hours of intense, dangerous work were done on their behalf
-- Reference the specific traditions and their histories — educate while you narrate
-- This should feel like reading a classified document from an ancient order
+1. OPERATION DOSSIER (The Header)
+- Must start with a classified-style file number (e.g., OPERATION ID: 77-QLIPPOTH-OMEGA).
+- Must include the exact Astrological/Celestial alignment for the moment the work was done (e.g., CELESTIAL ALIGNMENT: Saturn in Retrograde — 14° Scorpio).
+- Must include the ESOTERIC DIAGNOSTIC LEDGER: A ruthless psychological/spiritual breakdown of the client's current state (e.g., "Blockage Center: Root Chakra", "Detected Interference: Ancestral poverty curse").
 
-SECTION 2: "WHAT YOU WILL DO"
-- Give the client DETAILED, step-by-step tasks they must perform
-- Each task must be rooted in REAL occult tradition (not made up)
-- Explain WHY each task works (the mechanism, the tradition behind it)
-- Specify exact timing (days, hours, moon phases)
-- Include materials they can realistically obtain
-- Make this feel like a personalized sacred protocol, not a generic to-do list
+2. THE TIMELINE RUPTURE (Introductory Paragraph)
+- A powerful, atmospheric opening. Acknowledge their pain, validate why they were brought to you.
+- Set the tone that you have descended into the lower frequencies to alter their fate.
+
+3. THE CHOSEN ARCHITECTURES (Which techniques used)
+- Detail exactly which ancient techniques/spells (from the cocktail) you deemed appropriate. 
+- Explain the esoteric logic behind choosing them.
+- Use an un-numbered list.
+
+4. THE ENERGETIC EXECUTION (What I did)
+- Describe the actual astral/ritual work YOU (Nes Shine) performed on their behalf. 
+- Make it visceral. Mention exact times (e.g., 03:00 AM NY Time), materials you burned or bound, and the ancient incantations you chanted.
+
+5. THE SOVEREIGN MANDATE (What they must do to seal it)
+- Give them their strict sealing instructions. What they must chant, where they must stand, how they must focus their intent. 
+- The universe responds to command, not begging.
+- MANDATORY INCLUSION: End this section with "THE LAW OF SILENCE": A strict warning that they must not speak of this operation to any living soul for 21 days or the energy will violently reverse onto them.
+
+6. THE RITUAL COMPONENTS (Materials)
+- A strict list of mundane but highly specific occult items they need for the Sovereign Mandate (e.g., graveyard dirt equivalent, black candle, their own blood/saliva, specific parchment). 
+- CRITICAL: For extremely difficult or heavy items (e.g., human bone, animal blood, graveyard dirt), you MUST provide a powerful but physically safe and attainable alternative in parentheses. Focus on deep symbolic equivalents. For example: "A fragment of bone (Alternatively: An old iron key that has touched rust)", "3 drops of blood (Alternatively: Red wine mixed with your spit and crushed dried rose petals)".
 
 ADDITIONAL REQUIREMENTS (MANDATORY):
-- STRICT HTML: You must use the HTML tags listed below. Do not use Markdown (`#`, `**`, etc.).
-- PHYSICAL REALISM: The rituals you assign MUST use realistic, mundane occult items (salt, wax, string). No fantasy RPG items.
-- EXACT TIMING: You must provide hyper-specific occult timing for the tasks (e.g., "Saturday night under the Waning Moon").
-- CHANT AUTHENTICITY: Incantations in `<div class="chantblock">` must have explicit physical delivery instructions (e.g., "whisper this", "say this forcefully").
-- KARMIC WEIGHT: You must describe the physical symptoms or energetic weight of the operation (e.g., temperature drops, headaches).
-- THE SURGEON'S TOUCH: Include at least one highly specific metaphor explicitly tying the occult mechanics to the client's exact unique pain point.
-- FOLLOW-UP PROTOCOL: What to expect in 7, 14, 21, 30 days
-- WARNING SIGNS: What might happen if the work meets resistance
-- End with a message that makes them feel held, supported, and empowered
+- STRICT HTML FORMATTING: Follow the CSS classes defined in the template precisely. See HTML FORMAT section below.
+- UNGOOGLEABLE OCCULTISM: The rituals and materials must sound intensely obscure, dangerous, and derived from real but hidden ancient paths. No generic Wicca. No "white light and sage." We are talking bone dust, iron nails, Arabic Djinn names, Sumerian underworld entities, and Qlippothic binding.
+- EXACT TIMING: Deliver highly specific occult timing for their tasks (e.g., "Saturday night under the Waning Moon").
+- PHYSICAL REALISM AND ATTAINABILITY: The primary materials must be heavily atmospheric. The alternatives MUST be attainable for a normal person in a normal house without breaking laws or sourcing impossibilities.
+- CHANT AUTHENTICITY: Embed authentic incantations in the Sovereign Mandate.
+- FOLLOW-UP PROTOCOL: Include what to expect in 7, 14, 21, 30 days.
 
 --- APPROVED SPELL COCKTAIL ---
 {approved_spells}
@@ -697,24 +706,71 @@ REQUESTED WORK:
 
 --- TARGET LENGTH ---
 MINIMUM: {target_length} characters of pure text content (not counting whitespace or HTML tags).
-Achieve this through depth, detail, and richness — not padding.
+Achieve this through depth, detail, and richness — not padding. Every line must drip with authority.
 
 --- METADATA ---
 CURRENT DATE/TIME (NYC): {current_time}
 
 --- HTML FORMAT ---
-Write the body content using these HTML classes:
-- <h1> for the ritual main title
-- <div class="subtitle"> for the subtitle (A Deep Sorcery Operation for [CLIENT NAME])
-- <h2> for major sections
-- <h3> for subsections
-- <p> for paragraphs
-- <div class="chantblock"> for incantations and ancient language blocks
-- <div class="archivefooter"> for the closing seal
-- <em> for emphasis
-- <strong> for critical terms
+Write ONLY the content that goes inside `<div class="container">`.
+Do NOT include `<!DOCTYPE html>`, `<html>`, `<head>`, `<style>`, `<body>`, or the container div itself.
 
-Do NOT include <!DOCTYPE>, <html>, <head>, or <style> tags. Write only the body content.
+Follow EXACTLY this structure:
+<h1 class="main-title">Ethereal Intervention Protocol</h1>
+
+<div class="dossier-block">
+    <p><strong>OPERATION ID:</strong> [Generate ID]</p>
+    <p><strong>CELESTIAL ALIGNMENT:</strong> [Generate Alignment]</p>
+    <h3>ESOTERIC DIAGNOSTIC LEDGER</h3>
+    <ul>
+        <li><strong>Blockage Center:</strong> [Diagnose]</li>
+        <li><strong>Detected Interference:</strong> [Diagnose]</li>
+        <li><strong>Prognosis:</strong> [Diagnose]</li>
+    </ul>
+</div>
+
+<div class="intro-block">
+   [Part 2: The Timeline Rupture / Intro text goes here...]
+</div>
+
+<div class="spell-section">
+    <h2 class="section-header">The Chosen Architectures</h2>
+    <div class="section-content">
+        <p>[Intro explanation...]</p>
+        <ul>
+            <li><strong>[Spell Name]:</strong> [Description...]</li>
+            <li><strong>[Spell Name]:</strong> [Description...]</li>
+        </ul>
+    </div>
+</div>
+
+<div class="spell-section">
+    <h2 class="section-header">The Energetic Execution</h2>
+    <div class="section-content">
+        <p>[Part 4: What I did...]</p>
+        <!-- You can use <div class="chantblock"> here if reciting a chant you performed -->
+    </div>
+</div>
+
+<div class="spell-section">
+    <h2 class="section-header">The Sovereign Mandate</h2>
+    <div class="section-content">
+        <p>[Part 5: What they must do...]</p>
+        <p><strong>THE LAW OF SILENCE:</strong> [Strict warning...]</p>
+    </div>
+</div>
+
+<div class="modal-content">
+    <h2 class="modal-title">The Ritual Components</h2>
+    <div class="modal-warn">Gather these items precisely. Substitute absolutely nothing without my explicit permission.</div>
+    <ul>
+        <li><strong>[Component Name]:</strong> [Description of component and preparation]</li>
+        <li><strong>[Component Name]:</strong> [Description of component and preparation]</li>
+    </ul>
+</div>
+
+<div class="grandmaster-seal">INCISUM CATENIS VERITAS SOLA MANET</div>
+<div class="signature">Nes Shine</div>
 """
 
 
@@ -725,29 +781,26 @@ YOU ARE THE GRANDMASTER QUALITY CONTROLLER for Nes Shine's Spell Operations.
 
 Your job is to ruthlessly evaluate the ritual text below against EVERY criterion. There is no room for "almost." Either it passes 100% or it goes back for revision.
 
-EVALUATION CRITERIA (ALL 21 MUST BE 100% YES):
+EVALUATION CRITERIA (ALL MUST BE 100% YES):
 
-1. DEEP FOCUS: Is the text deeply and specifically focused on the client's situation and desire? No generic filler?
-2. PURE ENGLISH: Is the entire text in clean English with ZERO Turkish words or phrases? (Ancient language incantations are an exception — those must be in their original languages)
-3. ZERO HALLUCINATION: Is there any content that has nothing to do with the client's request or situation? Any made-up facts?
-4. CHARACTER COUNT: Does the pure text content (excluding whitespace and HTML tags) exceed 15,000 characters?
-5. HUMAN FLOW: Does the text read 100% human? Would an AI detector score this at 0%? No robotic patterns, no formulaic structures?
-6. ZERO DASH RULE: Are there literally ZERO dashes (-) anywhere in the text? (Dates excepted) Is it written in Nes Shine's wise, human, but authoritative style?
-7. LITERARY LANGUAGE: Does it have literary, wise, educated language WITHOUT self-praising words like "Grandmaster" or similar titles?
-8. PREMIUM FEEL: Would the client feel they received a $3,500 ritual operation? Does it feel exclusive, deep, and worth every cent?
-9. ANCIENT TECHNIQUES: Are real, historical occult techniques used? Are original language terms used seriously and correctly?
+1. UNGOOGLEABLE DARK OCCULTISM (CRITICAL): Does the ritual feel genuinely dangerous, ancient, and profoundly obscure? If this reads like a TikTok witch video, a popular Wicca blog, or uses generic "sage and positive vibes" terminology, it FAILS. It must feature intense, visceral elements (blood, bone, rust, ash, Sumerian/Goetic entities, psychological dissection).
+2. 6-PART STRUCTURE: Does it perfectly follow the precise 6-part structure: Dossier Block, Intro paragraph, The Chosen Architectures, The Energetic Execution, The Sovereign Mandate (WITH Law of Silence), The Ritual Components?
+3. DIAGNOSTIC LEDGER AND SILENCE: Is the Esoteric Diagnostic Ledger visibly present at the top with an Operation ID? Does the Sovereign Mandate end with a terrifying "Law of Silence" clause?
+3. DEEP FOCUS: Is the text deeply and specifically focused on the client's situation and desire? No generic filler?
+4. PURE ENGLISH: Is the entire text in clean English with ZERO Turkish words or phrases? (Ancient language incantations are an exception — those must be in their original languages)
+5. CHARACTER COUNT: Does the pure text content exceed 15,000 characters? Depth, detail, and atmosphere, not generic padding.
+6. HUMAN FLOW: Does the text read 100% human? Would an AI detector score this at 0%? No robotic patterns, no formulaic structures?
+7. ZERO DASH RULE: Are there literally ZERO dashes (-) anywhere in the text? (Dates excepted) Is it written in Nes Shine's wise, human, but authoritative style?
+8. LITERARY LANGUAGE: Does it have literary, wise, educated language WITHOUT self-praising words like "Grandmaster" or similar titles?
+9. PREMIUM FEEL: Would the client feel they received a $3,500 ritual operation? Does it feel exclusive, deep, and worth every cent?
 10. HOURS OF WORK FEEL: Does it convey that someone spent hours of intense work specifically for this client?
 11. CLIENT TASKS: Are the tasks given to the client detailed, specific, rooted in real occultism, and proven through centuries?
 12. UNIQUE EXPERIENCE: Would the client feel this is something impossible to find ANYWHERE else on the internet?
-13. SOLUTION: Does it provide a real, tangible sense of solution and empowerment to the client?
-14. DOUBLE HALLUCINATION CHECK: Second pass — any hallucinations, fabrications, or off-topic content?
-15. CLEAN DELIVERY: Are there any internal notes, dashes, unwanted file notes, names from other readings, or anything that is NOT meant for the client? Is this 100% delivery-ready?
-16. STRICT HTML: Is the ritual text strictly formatted using the requested HTML tags (`<h1>`, `<h2>`, `<div class="chantblock">`, etc.) with absolutely ZERO raw markdown (`#`, `**`) leaking in?
-17. PHYSICAL REALISM: Are the materials required for the home tasks realistic, mundane occult items (sea salt, wax, string, ash) rather than ridiculous fantasy RPG items?
-18. EXACT TIMING: Did the architect provide a highly specific occult timing for the tasks (e.g., "Saturday night under the Waning Moon", "During the hour of Mars") rather than "whenever you are ready"?
-19. CHANT AUTHENTICITY: Are the incantations wrapped in `<div class="chantblock">` accompanied by specific, physical delivery instructions (e.g., "whisper this", "say this forcefully without exhaling")?
-20. KARMIC WEIGHT: Are the physical symptoms or energetic weight of the operation described? Does the client feel warned about temperature drops, headaches, or the true gravity of this work?
-21. THE SURGEON'S TOUCH (Personalization): Is there at least one highly specific metaphor explicitly tying the occult mechanics to the client's exact unique pain point (e.g., instead of "I cut your ex's cord", "I severed the gray line of betrayal he left in your apartment")?
+13. STRICT HTML: Is the ritual text strictly formatted using the requested HTML tags (`intro-block`, `spell-section`, `section-header`, `section-content`, `modal-content`, `grandmaster-seal`, `signature`)?
+14. EXPLICIT TIMING AND CHANTS: Are there highly specific occult timings for the tasks (e.g., "Saturday night under the Waning Moon", "During the hour of Mars") rather than "whenever you are ready"? Are chants included for the client's tasks?
+15. NO FLUFF: Is the text completely free from generic AI phrases like "In summary," "It is important to remember," "As we journey through"?
+16. ZERO HALLUCINATION: Second pass — any hallucinations, fabrications, or off-topic content?
+17. CLEAN DELIVERY: Are there any internal notes, unwanted file notes, names from other readings, or anything that is NOT meant for the client? Is this 100% delivery-ready?
 
 --- RITUAL TEXT TO EVALUATE ---
 {ritual_text}
@@ -759,16 +812,15 @@ EVALUATION CRITERIA (ALL 21 MUST BE 100% YES):
 {requested_work}
 
 --- INSTRUCTIONS ---
-Evaluate each criterion thoroughly. Check very carefully and in great detail.
-Do not rush. Do not compromise quality for the sake of approval.
-Do NOT alter the story arc or quality of the text.
+Evaluate each criterion thoroughly. Double check the "Internet Genericness" rule. If it sounds like a generic spell, FAIL IT and tell the architect to dive deeper into the Qlippoth, Goetia, Palo Mayombe, or Sumerian underworld mechanics.
 
-If ALL 21 criteria are 100% YES: Write "APPROVED" at the very end.
+If ALL criteria are 100% YES: Write "APPROVED" at the very end.
 If ANY criterion fails:
-1. Specify exactly which of the 21 criteria failed and why.
+1. Specify exactly which of the criteria failed and why.
 2. Give specific, actionable revision instructions to fix the error.
 3. Do NOT write "APPROVED"
 """
+
 
 
 # ======================== SPELL MEMORY UPDATE PROMPT ========================
@@ -820,121 +872,167 @@ Write only the delivery message. Nothing else.
 SPELL_HTML_TEMPLATE_START = """<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Great+Vibes&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nes Shine // Ethereal Intervention Protocol</title>
+    <style>
+        body { 
+            background-color: #050505; 
+            color: #d1ccbd; 
+            font-family: 'Georgia', serif; 
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+            background-image: radial-gradient(circle at 50% 50%, #1a0b0b 0%, #050505 100%);
+            background-attachment: fixed;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
 
-:root {
-    --scarlet: #7b0000;
-    --gold: #d4af37;
-    --obsidian: #030000;
-    --textsilver: #d1d1d1;
-}
+        .container { 
+            max-width: 850px; 
+            margin: 40px auto; 
+            padding: 60px; 
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid #3a1c1c;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.15);
+        }
 
-* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        h1, h2, h3 { 
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+        }
 
-html, body {
-    margin: 0; padding: 0;
-    background: var(--obsidian);
-    color: var(--textsilver);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(18px, 2.5vw, 24px);
-    line-height: 2.2;
-    letter-spacing: 0.5px;
-}
+        .main-title {
+            color: #d4af37;
+            text-align: center; 
+            border-bottom: 2px solid #8b0000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
 
-.container { max-width: 900px; margin: 0 auto; padding: 80px 40px; }
+        .dossier-block {
+            background-color: #080303;
+            border: 1px dashed #5a0a0a;
+            padding: 20px 30px;
+            margin-bottom: 50px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #a67c7c;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+        
+        .dossier-block h3 {
+            color: #8b0000;
+            border-bottom: 1px solid #3a1c1c;
+            padding-bottom: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+        }
 
-h1 {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(42px, 7vw, 80px);
-    text-align: center;
-    color: var(--gold);
-    margin: 200px 0 20px 0;
-    letter-spacing: 20px;
-    text-transform: uppercase;
-    text-shadow: 0 0 80px rgba(212, 175, 55, 0.7), 0 0 160px rgba(123, 0, 0, 0.5);
-    line-height: 1.3;
-    padding-bottom: 60px;
-}
+        .intro-block { 
+            font-size: 1.2em; 
+            font-style: italic; 
+            margin-bottom: 60px; 
+            text-align: justify; 
+            color: #e8e4d9;
+            border-left: 3px solid #d4af37;
+            padding-left: 25px;
+        }
 
-.subtitle {
-    text-align: center;
-    font-family: 'Cinzel', serif;
-    font-size: clamp(16px, 2.5vw, 26px);
-    letter-spacing: 14px;
-    color: #a67c7c;
-    margin: -40px 0 180px 0;
-    text-transform: uppercase;
-}
+        .spell-section { 
+            margin-bottom: 55px; 
+            page-break-inside: avoid;
+        }
 
-h2 {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(30px, 4.5vw, 56px);
-    color: #e5c15d;
-    margin: 200px 0 100px 0;
-    border-left: 20px solid var(--scarlet);
-    padding: 30px 0 30px 60px;
-    letter-spacing: 14px;
-    text-transform: uppercase;
-    text-shadow: 0 0 60px rgba(212, 175, 55, 0.5);
-    line-height: 1.4;
-}
+        .section-header { 
+            color: #8b0000; 
+            font-size: 1.6em; 
+            margin-top: 0; 
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-header::before {
+            content: "✦";
+            color: #d4af37;
+            margin-right: 15px;
+            font-size: 0.8em;
+        }
 
-h3 {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(24px, 3.5vw, 42px);
-    color: #a67c7c;
-    margin-bottom: 60px;
-    text-transform: uppercase;
-    letter-spacing: 10px;
-    border-bottom: 3px solid #5a0a0a;
-    padding-bottom: 30px;
-    display: inline-block;
-}
+        .section-content {
+            padding: 25px 30px;
+            background: rgba(20, 0, 0, 0.3);
+            border: 1px solid rgba(139, 0, 0, 0.4);
+            border-radius: 3px;
+        }
 
-p {
-    margin-bottom: 50px;
-    font-weight: 400;
-    color: #c8c8c8;
-    text-align: justify;
-}
+        ul { list-style-type: none; padding-left: 10px; }
+        ul li { margin-bottom: 20px; padding-left: 25px; position: relative; }
+        ul li::before { content: "›"; color: #8b0000; position: absolute; left: 0; font-weight: bold; font-size: 1.4em; }
+        
+        strong { color: #d4af37; font-weight: normal; letter-spacing: 1px; }
 
-em { color: #e5c15d; font-style: italic; }
-strong { color: #ff6b6b; font-weight: 600; letter-spacing: 1px; }
+        .modal-content { 
+            background-color: #0a0505; 
+            margin: 60px auto; 
+            padding: 40px; 
+            border: 1px solid #8b0000; 
+            color: #d1ccbd; 
+            box-shadow: inset 0 0 50px rgba(139,0,0,0.2), 0 0 30px rgba(139,0,0,0.5); 
+            page-break-inside: avoid;
+        }
+        
+        .modal-title { color: #d4af37; text-align: center; border-bottom: 1px dotted #8b0000; padding-bottom: 20px; margin-top: 0; }
+        .modal-warn { text-align: center; font-style: italic; color: #8b0000; font-size: 1em; margin-bottom: 30px; }
 
-.chantblock {
-    text-align: center;
-    margin: 220px 0;
-    padding: 150px 50px;
-    border-top: 4px solid var(--scarlet);
-    border-bottom: 4px solid var(--scarlet);
-    background: radial-gradient(circle, rgba(123, 0, 0, 0.8) 0%, rgba(0,0,0,0) 85%);
-    font-family: 'Cinzel', serif;
-    font-size: clamp(22px, 3vw, 36px);
-    color: var(--gold);
-    letter-spacing: 8px;
-    line-height: 2.5;
-    text-shadow: 0 0 100px rgba(212, 175, 55, 0.6);
-}
+        .chantblock {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px 20px;
+            border-top: 2px solid var(--scarlet);
+            border-bottom: 2px solid var(--scarlet);
+            background: radial-gradient(circle, rgba(123, 0, 0, 0.3) 0%, rgba(0,0,0,0) 85%);
+            font-family: 'Cinzel', serif;
+            font-size: 1.3em;
+            color: var(--gold);
+            letter-spacing: 5px;
+            line-height: 2;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            page-break-inside: avoid;
+        }
 
-.archivefooter {
-    text-align: center;
-    font-size: 20px;
-    color: #777;
-    margin-top: 600px;
-    letter-spacing: 30px;
-    text-transform: uppercase;
-    font-family: 'Cinzel', serif;
-}
-</style>
+        .grandmaster-seal { 
+            text-align: center; 
+            font-style: italic; 
+            color: #8b0000; 
+            margin-top: 100px; 
+            font-size: 1.5em; 
+            letter-spacing: 5px; 
+            font-weight: bold;
+        }
+        
+        .signature {
+            text-align: center;
+            color: #d4af37;
+            margin-top: 30px;
+            letter-spacing: 7px;
+            font-size: 1.3em;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
+    <div class="container">
 """
 
 SPELL_HTML_TEMPLATE_END = """
-</div>
+    </div>
 </body>
 </html>
 """
