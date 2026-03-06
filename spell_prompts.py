@@ -786,21 +786,21 @@ EVALUATION CRITERIA (ALL MUST BE 100% YES):
 1. UNGOOGLEABLE DARK OCCULTISM (CRITICAL): Does the ritual feel genuinely dangerous, ancient, and profoundly obscure? If this reads like a TikTok witch video, a popular Wicca blog, or uses generic "sage and positive vibes" terminology, it FAILS. It must feature intense, visceral elements (blood, bone, rust, ash, Sumerian/Goetic entities, psychological dissection).
 2. 6-PART STRUCTURE: Does it perfectly follow the precise 6-part structure: Dossier Block, Intro paragraph, The Chosen Architectures, The Energetic Execution, The Sovereign Mandate (WITH Law of Silence), The Ritual Components?
 3. DIAGNOSTIC LEDGER AND SILENCE: Is the Esoteric Diagnostic Ledger visibly present at the top with an Operation ID? Does the Sovereign Mandate end with a terrifying "Law of Silence" clause?
-3. DEEP FOCUS: Is the text deeply and specifically focused on the client's situation and desire? No generic filler?
-4. PURE ENGLISH: Is the entire text in clean English with ZERO Turkish words or phrases? (Ancient language incantations are an exception — those must be in their original languages)
-5. CHARACTER COUNT: Does the pure text content exceed 15,000 characters? Depth, detail, and atmosphere, not generic padding.
-6. HUMAN FLOW: Does the text read 100% human? Would an AI detector score this at 0%? No robotic patterns, no formulaic structures?
-7. ZERO DASH RULE: Are there literally ZERO dashes (-) anywhere in the text? (Dates excepted) Is it written in Nes Shine's wise, human, but authoritative style?
-8. LITERARY LANGUAGE: Does it have literary, wise, educated language WITHOUT self-praising words like "Grandmaster" or similar titles?
-9. PREMIUM FEEL: Would the client feel they received a $3,500 ritual operation? Does it feel exclusive, deep, and worth every cent?
-10. HOURS OF WORK FEEL: Does it convey that someone spent hours of intense work specifically for this client?
-11. CLIENT TASKS: Are the tasks given to the client detailed, specific, rooted in real occultism, and proven through centuries?
-12. UNIQUE EXPERIENCE: Would the client feel this is something impossible to find ANYWHERE else on the internet?
-13. STRICT HTML: Is the ritual text strictly formatted using the requested HTML tags (`intro-block`, `spell-section`, `section-header`, `section-content`, `modal-content`, `grandmaster-seal`, `signature`)?
-14. EXPLICIT TIMING AND CHANTS: Are there highly specific occult timings for the tasks (e.g., "Saturday night under the Waning Moon", "During the hour of Mars") rather than "whenever you are ready"? Are chants included for the client's tasks?
-15. NO FLUFF: Is the text completely free from generic AI phrases like "In summary," "It is important to remember," "As we journey through"?
-16. ZERO HALLUCINATION: Second pass — any hallucinations, fabrications, or off-topic content?
-17. CLEAN DELIVERY: Are there any internal notes, unwanted file notes, names from other readings, or anything that is NOT meant for the client? Is this 100% delivery-ready?
+4. DEEP FOCUS: Is the text deeply and specifically focused on the client's situation and desire? No generic filler?
+5. PURE ENGLISH: Is the entire text in clean English with ZERO Turkish words or phrases? (Ancient language incantations are an exception — those must be in their original languages)
+6. CHARACTER COUNT: Does the pure text content exceed 15,000 characters? Depth, detail, and atmosphere, not generic padding.
+7. HUMAN FLOW: Does the text read 100% human? Would an AI detector score this at 0%? No robotic patterns, no formulaic structures?
+8. ZERO DASH RULE: Are there literally ZERO dashes (-) anywhere in the text? (Dates excepted) Is it written in Nes Shine's wise, human, but authoritative style?
+9. LITERARY LANGUAGE: Does it have literary, wise, educated language WITHOUT self-praising words like "Grandmaster" or similar titles?
+10. PREMIUM FEEL: Would the client feel they received a $3,500 ritual operation? Does it feel exclusive, deep, and worth every cent?
+11. HOURS OF WORK FEEL: Does it convey that someone spent hours of intense work specifically for this client?
+12. CLIENT TASKS: Are the tasks given to the client detailed, specific, rooted in real occultism, and proven through centuries?
+13. UNIQUE EXPERIENCE: Would the client feel this is something impossible to find ANYWHERE else on the internet?
+14. STRICT HTML: Is the ritual text strictly formatted using the requested HTML tags (`intro-block`, `spell-section`, `section-header`, `section-content`, `modal-content`, `grandmaster-seal`, `signature`)?
+15. EXPLICIT TIMING AND CHANTS: Are there highly specific occult timings for the tasks (e.g., "Saturday night under the Waning Moon", "During the hour of Mars") rather than "whenever you are ready"? Are chants included for the client's tasks?
+16. NO FLUFF: Is the text completely free from generic AI phrases like "In summary," "It is important to remember," "As we journey through"?
+17. ZERO HALLUCINATION: Second pass — any hallucinations, fabrications, or off-topic content?
+18. CLEAN DELIVERY: Are there any internal notes, unwanted file notes, names from other readings, or anything that is NOT meant for the client? Is this 100% delivery-ready?
 
 --- RITUAL TEXT TO EVALUATE ---
 {ritual_text}
