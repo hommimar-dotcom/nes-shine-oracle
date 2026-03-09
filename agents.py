@@ -432,31 +432,34 @@ class OracleBrain:
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(5)
-            except exceptions.ResourceExhausted:
-                consecutive_exhaustions += 1
-                if consecutive_exhaustions >= len(self.api_keys):
-                    err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
-                    print(err_msg_sleep)
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    time.sleep(60)
-                    consecutive_exhaustions = 0
-                    continue
-                
-                err_msg = f"API Limiti (429). Yedek Anahtara Geçiliyor... ({consecutive_exhaustions}/{len(self.api_keys)})"
-                print(err_msg)
-                if progress_callback: progress_callback(err_msg)
-                
-                while True:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        
-                        msg_active = f"Anahtar {self.current_key_index + 1} ile üretim yapılıyor (Lütfen bekleyin)..."
-                        print(msg_active)
-                        if progress_callback: progress_callback(msg_active)
-                        break
             except Exception as e:
+                err_name = type(e).__name__
+                if err_name == "ResourceExhausted" or "429" in str(e):
+                    consecutive_exhaustions += 1
+                    if consecutive_exhaustions >= len(self.api_keys):
+                        err_msg_sleep = "TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor..."
+                        print(err_msg_sleep)
+                        if progress_callback: progress_callback(err_msg_sleep)
+                        time.sleep(60)
+                        consecutive_exhaustions = 0
+                        continue
+                    
+                    err_msg = f"API Limiti (429). Yedek Anahtara Geçiliyor... ({consecutive_exhaustions}/{len(self.api_keys)})"
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    
+                    while True:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            
+                            msg_active = f"Anahtar {self.current_key_index + 1} ile üretim yapılıyor (Lütfen bekleyin)..."
+                            print(msg_active)
+                            if progress_callback: progress_callback(msg_active)
+                            break
+                    continue
+
                 err_msg = f"BEKLENMEYEN HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
@@ -497,20 +500,23 @@ class OracleBrain:
             except exceptions.InvalidArgument as e:
                 print(f"CRITICAL STREAM ERROR: Invalid Argument: {str(e)}. Retrying...")
                 time.sleep(5)
-            except exceptions.ResourceExhausted:
-                print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
-                original_index = self.current_key_index
-                while True:
-                    self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                    if self.current_key_index == original_index:
-                        print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
-                        time.sleep(60)
-                        break
-                    if self.api_keys[self.current_key_index]:
-                        self._configure_genai()
-                        self._reinit_models()
-                        break
             except Exception as e:
+                err_name = type(e).__name__
+                if err_name == "ResourceExhausted" or "429" in str(e):
+                    print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
+                    original_index = self.current_key_index
+                    while True:
+                        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                        if self.current_key_index == original_index:
+                            print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
+                            time.sleep(60)
+                            break
+                        if self.api_keys[self.current_key_index]:
+                            self._configure_genai()
+                            self._reinit_models()
+                            break
+                    continue
+
                 err_msg = f"YAYIN GECİKMESİ/HATA ({type(e).__name__}): {str(e)[:150]}... 10s bekleyip tekrar deniyor..."
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
