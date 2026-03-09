@@ -1,3 +1,7 @@
+import os
+import time
+import json
+import google.generativeai as genai
 from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_ID_PROMPT, MEMORY_UPDATE_PROMPT
 
 class ContentBlockException(Exception):
