@@ -561,11 +561,18 @@ with tab1:
                 
                 try:
                     # 1. GENERATE TEXT
+                    if "status_log" not in st.session_state:
+                        st.session_state.status_log = []
+                    
                     def update_status(msg):
                         # Clean status updates (No emojis)
                         clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
                         st.session_state.last_status = clean_msg.strip().upper()
-                        status_container.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
+                        st.session_state.status_log.append(st.session_state.last_status)
+                        # Show last 5 status lines so output is never blank
+                        recent = st.session_state.status_log[-5:]
+                        display = "\n\n".join([f"**SYSTEM STATUS:** `{s}`" for s in recent])
+                        status_container.markdown(display)
                         # time.sleep(0.1)  # Removed sleep to make stream faster
                     
                     st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
