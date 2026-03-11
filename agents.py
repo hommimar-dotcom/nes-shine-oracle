@@ -17,7 +17,7 @@ class OracleBrain:
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
         self.current_key_index = 0
         self.current_model_name = self.PRIMARY_MODEL
-        self.FALLBACK_MODEL = "gemini-3.0-pro-preview"  # Fail-safe: 3.0 Pro (minimum 5 QC zorunlu)
+        self.FALLBACK_MODEL = self.PRIMARY_MODEL  # Fallback iptal: her zaman 3.1 kullan, sadece anahtar değiştir
         self._reset_usage_stats()
         self._configure_genai()
     
@@ -449,22 +449,17 @@ class OracleBrain:
                     
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
-                if self.current_model_name != self.FALLBACK_MODEL:
-                    # Switch to 3.0 Pro fallback if 3.1 Pro backend crashes / times out
-                    err_msg_sleep = f"Google 3.1 PRO ÇÖKTÜ ({type(e).__name__}). 3.0 PRO Yedeğine Geçiliyor..."
-                    print(err_msg_sleep)
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    
-                    self.current_model_name = self.FALLBACK_MODEL
+                # Model değiştirme yok - sadece anahtar rotasyonu ve bekleme
+                err_msg_sleep = f"API YOĞUN ({type(e).__name__}) - Tur {attempt}. Anahtar değiştiriliyor, 15s bekleniyor..."
+                print(err_msg_sleep)
+                if progress_callback: progress_callback(err_msg_sleep)
+                # Anahtar rotasyonu
+                self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+                if self.api_keys[self.current_key_index]:
                     self._configure_genai()
                     self._reinit_models()
-                    continue
-                else:
-                    err_msg_sleep = f"API YOĞUN ({type(e).__name__}) - Tur {attempt}. 15s bekleniyor..."
-                    print(err_msg_sleep)
-                    if progress_callback: progress_callback(err_msg_sleep)
-                    time.sleep(15)
-                    continue
+                time.sleep(15)
+                continue
                     
             except exceptions.InvalidArgument as e:
                 err_msg = f"KONTROL HATASI (Invalid Argument). 5s bekleyip tekrar deniyor... {str(e)[:100]}"
