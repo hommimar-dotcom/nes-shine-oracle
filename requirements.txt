@@ -8,3 +8,5 @@ supabase
 pytz
 extra-streamlit-components
 elevenlabs
+miniaudio
+imageio-ffmpeg

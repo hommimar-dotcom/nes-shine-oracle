@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nes Shine // Spell Engine Protocol</title>
+    <style>
+        /* Nes Shine Dark Occult Theme */
+        body { 
+            background-color: #050505; /* Deeper black */
+            color: #d1ccbd; /* Ancient parchment white */
+            font-family: 'Georgia', serif; 
+            line-height: 1.8;
+            margin: 0;
+            padding: 0;
+            background-image: radial-gradient(circle at 50% 50%, #1a0b0b 0%, #050505 100%);
+            background-attachment: fixed;
+        }
+
+        .container { 
+            max-width: 850px; 
+            margin: 40px auto; 
+            padding: 40px; 
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid #3a1c1c;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.15);
+            position: relative;
+        }
+
+        /* Occult Header Styling */
+        h1, h2, h3 { 
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            text-transform: uppercase; 
+            letter-spacing: 3px; 
+        }
+
+        .main-title {
+            color: #d4af37; /* Gold */
+            text-align: center; 
+            border-bottom: 2px solid #8b0000; /* Deep Blood Red */
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        /* 1. Giriş Paragrafı (Intro) */
+        .intro-block { 
+            font-size: 1.15em; 
+            font-style: italic; 
+            margin-bottom: 50px; 
+            text-align: justify; 
+            color: #e8e4d9;
+            border-left: 3px solid #d4af37;
+            padding-left: 20px;
+        }
+
+        /* Bölüm Kutuları */
+        .spell-section { 
+            margin-bottom: 45px; 
+            padding: 0;
+        }
+
+        .section-header { 
+            color: #8b0000; 
+            font-size: 1.4em; 
+            margin-top: 0; 
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-header::before {
+            content: "✦";
+            color: #d4af37;
+            margin-right: 15px;
+            font-size: 0.8em;
+        }
+
+        .section-content {
+            padding: 20px 25px;
+            background: rgba(20, 0, 0, 0.2);
+            border: 1px solid rgba(139, 0, 0, 0.3);
+            border-radius: 2px;
+        }
+
+        /* Madde İşaretleri için Tasarım */
+        ul { list-style-type: none; padding-left: 10px; }
+        ul li { margin-bottom: 15px; padding-left: 20px; position: relative; }
+        ul li::before { content: "›"; color: #8b0000; position: absolute; left: 0; font-weight: bold; font-size: 1.2em; }
+        
+        strong { color: #d4af37; font-weight: normal; letter-spacing: 1px; }
+
+        /* Modal Düğmesi (Malzemeler) */
+        .invoke-btn { 
+            background: transparent;
+            color: #8b0000; 
+            padding: 15px 40px; 
+            border: 1px solid #8b0000; 
+            cursor: pointer; 
+            font-family: inherit; 
+            font-size: 1.1em; 
+            letter-spacing: 2px; 
+            transition: all 0.4s ease; 
+            display: block; 
+            margin: 60px auto 40px auto; 
+            text-transform: uppercase; 
+        }
+        
+        .invoke-btn:hover { 
+            background: rgba(139, 0, 0, 0.1); 
+            color: #d4af37; 
+            border-color: #d4af37; 
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); 
+        }
+
+        /* Modal (Malzeme Listesi Pop-up) */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 99; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.9); 
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content { 
+            background-color: #0a0505; 
+            margin: 10% auto; 
+            padding: 40px; 
+            border: 1px solid #8b0000; 
+            width: 80%; 
+            max-width: 500px; 
+            color: #d1ccbd; 
+            box-shadow: inset 0 0 50px rgba(139,0,0,0.2), 0 0 30px rgba(139,0,0,0.5); 
+            position: relative;
+        }
+        
+        .modal-title { color: #d4af37; text-align: center; border-bottom: 1px dotted #8b0000; padding-bottom: 20px; margin-top: 0; }
+        .modal-warn { text-align: center; font-style: italic; color: #8b0000; font-size: 0.9em; margin-bottom: 30px; }
+
+        .close-btn { 
+            color: #d4af37; 
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 35px; 
+            font-family: sans-serif;
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        .close-btn:hover { color: #fff; text-shadow: 0 0 10px #fff; }
+
+        /* The Seal (Mühür) */
+        .grandmaster-seal { 
+            text-align: center; 
+            font-style: italic; 
+            color: #8b0000; 
+            margin-top: 70px; 
+            font-size: 1.3em; 
+            letter-spacing: 4px; 
+            font-weight: bold;
+        }
+        .signature {
+            text-align: center;
+            color: #d4af37;
+            margin-top: 20px;
+            letter-spacing: 5px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="main-title">Ethereal Intervention Protocol</h1>
+        
+        <!-- 1. Giriş Parağrafı -->
+        <div class="intro-block">
+            I felt the deep rupture in your timeline before I even analyzed your psychic coordinates. You are standing in the center of a storm, entirely depleted. I do not do soft spiritual comfort. You came here because the mundane world failed you. I have descended into the lower frequencies to pull the exact blueprint required to shatter the blockages in your path. Listen carefully. We are altering the architecture of your fate today.
+        </div>
+
+        <!-- 2. Hangi Teknikler Kullanıldı (The Architectures) -->
+        <div class="spell-section">
+            <h2 class="section-header">The Chosen Architectures</h2>
+            <div class="section-content">
+                <p>Based on the highly volatile state of your current grid, I have selected a specific interlocking cocktail of profound intervention. The gentle light is insufficient here.</p>
+                <ul>
+                    <li><strong>The Obsidian Wall (Defensive):</strong> Activated to immediately sever the parasitic cords draining your life force and reflect the malice back to its source.</li>
+                    <li><strong>The Chronos Loop (Entropic):</strong> Sourced from Ancient Greek paradigms, used here to completely freeze the forward momentum of your adversaries.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3. Ne Yaptım (The Execution) -->
+        <div class="spell-section">
+            <h2 class="section-header">The Energetic Execution</h2>
+            <div class="section-content">
+                <p>I have entered the astral state on your behalf and constructed the primary energetic scaffolding. At exactly 03:00 AM NY Time, I initiated the opening sequence, pulling the raw cosmic aether down into the target variables you provided. I have bound the energetic proxies of your adversaries to lead, dropping them to the metaphorical ocean floor. The heavy lifting is done. The current is now violently rushing toward your manifestation coordinate.</p>
+            </div>
+        </div>
+
+        <!-- 4. Client İçin Mühürleme Görevi (The Sovereign Mandate) -->
+        <div class="spell-section">
+            <h2 class="section-header">The Sovereign Mandate</h2>
+            <div class="section-content">
+                <p>I am the architect, but you are the vessel. A ritual left unsealed by the client is a leaking battery. For the next three consecutive nights, you are required to assume command over your reality.</p>
+                <p>You must face the North at exactly midnight. You will light the necessary components and recite the provided incantation without breaking your gaze from the flame. Do not approach this ceremony with hope or desperation. Approach it with absolute, terrifying authority. The universe does not respond to begging; it only responds to command.</p>
+            </div>
+        </div>
+
+        <!-- Yalnızca CSS/JS ile çalışan Malzeme Listesi Modal Butonu -->
+        <button class="invoke-btn" id="materialsBtn">Reveal Required Components</button>
+
+        <!-- 5. Malzeme Listesi Modal (Pop-up) -->
+        <div id="materialsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2 class="modal-title">The Ritual Components</h2>
+                <div class="modal-warn">Gather these items precisely. Substitute absolutely nothing without my explicit permission.</div>
+                <ul>
+                    <li><strong>One Black Candle:</strong> Solid core, preferably beeswax.</li>
+                    <li><strong>The Anchor:</strong> Three drops of your own blood, or a lock of your hair.</li>
+                    <li><strong>Graveyard Dirt:</strong> Or alternatively, ash from a deeply burnt hardwood fire.</li>
+                    <li><strong>Parchment:</strong> Inscribed with the target's exact birth date in red ink.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Mühür ve Kapanış -->
+        <div class="grandmaster-seal">INCISUM CATENIS VERITAS SOLA MANET</div>
+        <div class="signature">Nes Shine</div>
+    </div>
+
+    <script>
+        // Modal Action Script
+        var modal = document.getElementById("materialsModal");
+        var btn = document.getElementById("materialsBtn");
+        var span = document.getElementsByClassName("close-btn")[0];
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -556,14 +556,29 @@ class OracleBrain:
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
 
-    def _reinit_models(self):
-        self.model = genai.GenerativeModel(
-            self.current_model_name,
-            generation_config=self.generation_config,
-            safety_settings=self.safety_settings
-        )
-        self.extraction_model = genai.GenerativeModel(
-            self.current_model_name,
-            generation_config=self.extraction_config,
-            safety_settings=self.safety_settings
-        )
+
+
+    def tts_formatter_agent(self, raw_text, progress_callback=None):
+        """
+        AI-based formatting for ElevenLabs TTS with 1 Round of mandatory QC.
+        """
+        from prompts import TTS_FORMATTER_PROMPT, TTS_FORMATTER_QC_PROMPT
+        
+        if progress_callback: progress_callback("AI Nes Shine: Metin taslağı hazırlanıyor...")
+        prompt = f"{TTS_FORMATTER_PROMPT}\n\nHAM METİN:\n{raw_text}"
+        
+        draft = self.generate_with_retry(self.model, prompt, progress_callback=progress_callback).text.strip()
+        
+        # Mandatory 1 Round of QC to ensure "Nes Shine" quality
+        if progress_callback: progress_callback("Grandmaster: Ses akışı ve es'ler kontrol ediliyor...")
+        
+        qc_prompt = f"{TTS_FORMATTER_QC_PROMPT}\n\nHAZIRLANAN METİN:\n{draft}"
+        qc_resp = self.generate_with_retry(self.extraction_model, qc_prompt, progress_callback=progress_callback).text.strip()
+        
+        if "APPROVED" not in qc_resp or "REVISE" in qc_resp:
+            if progress_callback: progress_callback("Grandmaster: Revizyon isteniyor, metin derinleştiriliyor...")
+            revise_prompt = f"{TTS_FORMATTER_PROMPT}\n\nGRANDMASTER ELEŞTİRİSİ:\n{qc_resp}\n\nİLK TASLAK:\n{draft}\n\nLÜTFEN METNİ YENİDEN DÜZENLE."
+            final_version = self.generate_with_retry(self.model, revise_prompt, progress_callback=progress_callback).text.strip()
+            return final_version
+        
+        return draft
