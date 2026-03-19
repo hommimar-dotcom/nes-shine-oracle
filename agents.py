@@ -182,9 +182,19 @@ class OracleBrain:
             Lütfen yukarıdaki eleştirileri dikkate alarak metni YENİDEN YAZ.
             """
             
-        # Use Standard (High Temp) Model for Writing with Retry
-        response = self.generate_with_retry(self.model, prompt, progress_callback=progress_callback)
-        return response.text
+        # Use Streaming Model for Writing to prevent WebSocket timeouts during long reads
+        import time
+        response_stream = self.stream_with_retry(self.model, prompt, progress_callback=progress_callback)
+        full_text = ""
+        last_update = time.time()
+        
+        for chunk in response_stream:
+            full_text += chunk
+            if progress_callback and time.time() - last_update > 4.0:
+                progress_callback(f"Nes Shine Tünelliyor... ({len(full_text)} harf dokundu)")
+                last_update = time.time()
+                
+        return full_text
 
     def get_ny_time(self):
         """Returns current time in New York."""

@@ -575,7 +575,11 @@ with tab1:
                         # Clean status updates (No emojis)
                         clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
                         st.session_state.last_status = clean_msg.strip().upper()
-                        st.session_state.status_log.append(st.session_state.last_status)
+                        
+                        # Only append if it's new or the first one, to prevent flooding the log
+                        if not st.session_state.status_log or st.session_state.status_log[-1] != st.session_state.last_status:
+                            st.session_state.status_log.append(st.session_state.last_status)
+                            
                         # Show last 5 status lines so output is never blank
                         recent = st.session_state.status_log[-5:]
                         display = "\n\n".join([f"**SYSTEM STATUS:** `{s}`" for s in recent])
