@@ -355,6 +355,20 @@ class OracleBrain:
             return response.text.strip()
         except Exception as e:
             return f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
+
+    def _reinit_models(self):
+        """Reinitialize model objects after API key rotation."""
+        self.model = genai.GenerativeModel(
+            self.current_model_name,
+            generation_config=self.generation_config,
+            safety_settings=self.safety_settings
+        )
+        self.extraction_model = genai.GenerativeModel(
+            self.current_model_name,
+            generation_config=self.extraction_config,
+            safety_settings=self.safety_settings
+        )
+
     def _encode_rot13(self, text):
         import codecs
         return codecs.encode(text, 'rot_13')
