@@ -544,7 +544,14 @@ with tab1:
             st.session_state.is_generating = False
     
         # Show persisted status on rerun (survives page interactions)
-        if st.session_state.last_status:
+        if st.session_state.is_generating and st.session_state.last_status:
+            st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (STAND BY)")
+            if "status_log" in st.session_state and st.session_state.status_log:
+                for s in st.session_state.status_log[-5:]:
+                    st.markdown(f"**SYSTEM STATUS:** `{s}`")
+            else:
+                st.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
+        elif st.session_state.last_status and not st.session_state.is_generating:
             st.markdown(f"**SYSTEM STATUS:** `{st.session_state.last_status}`")
     
         if generate_btn and api_key:
