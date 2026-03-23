@@ -561,14 +561,25 @@ class OracleBrain:
             except Exception as e:
                 err_name = type(e).__name__
                 if err_name == "ResourceExhausted" or "429" in str(e):
-                    print("WARNING STREAM: API Key Exhausted (429). Attempting rotation...")
+                    if not hasattr(self, 'stream_exhaustion_count'):
+                        self.stream_exhaustion_count = 0
+                    
+                    self.stream_exhaustion_count += 1
+                    
+                    if self.stream_exhaustion_count >= len(self.api_keys):
+                        print("TÜM ANAHTARLAR TÜKENDİ (STREAM). 60s bekleniyor...")
+                        if progress_callback: progress_callback("TÜM ANAHTARLAR TÜKENDİ. 60s bekleniyor...")
+                        import time
+                        time.sleep(60)
+                        self.stream_exhaustion_count = 0
+                        continue
+
+                    print(f"WARNING STREAM: API Key Exhausted (429). Attempting rotation... ({self.stream_exhaustion_count}/{len(self.api_keys)})")
+                    if progress_callback: progress_callback(f"API Limiti (429). Yedek Anahtara Geçiliyor... ({self.stream_exhaustion_count}/{len(self.api_keys)})")
+                    
                     original_index = self.current_key_index
                     while True:
                         self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
-                        if self.current_key_index == original_index:
-                            print("ALL API KEYS EXHAUSTED DURING STREAM. Sleeping 60s before retrying...")
-                            time.sleep(60)
-                            break
                         if self.api_keys[self.current_key_index]:
                             self._configure_genai()
                             self._reinit_models()
