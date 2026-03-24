@@ -40,8 +40,7 @@ class MemoryManager:
         
         # Fallback to local files if no Supabase
         if not self.use_db:
-            if not os.path.exists("client_memories"):
-                os.makedirs("client_memories")
+            os.makedirs("client_memories", exist_ok=True)
 
     # ==================== APP SETTINGS ====================
     def save_settings(self, settings_data):

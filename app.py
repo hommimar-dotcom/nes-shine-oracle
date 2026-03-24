@@ -436,8 +436,7 @@ with st.sidebar:
     
     # List Saved Readings
     archive_dir = "saved_readings"
-    if not os.path.exists(archive_dir):
-        os.makedirs(archive_dir)
+    os.makedirs(archive_dir, exist_ok=True)
         
     # Search/Filter Mechanism for Scalability
     filter_text = st.text_input("SEARCH ARCHIVES", placeholder="Enter Client Name or Date...")
