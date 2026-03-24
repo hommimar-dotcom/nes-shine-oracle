@@ -302,6 +302,7 @@ class MemoryManager:
         clients = self.list_all_clients()
         for client in clients:
             client_name = client["client_name"]
+            mem = self.load_memory(client_name)
             if mem:
                 key = sanitize_filename(client_name)
                 all_data[key] = mem

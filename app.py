@@ -542,6 +542,20 @@ with tab1:
             st.session_state.last_status = None
         if "is_generating" not in st.session_state:
             st.session_state.is_generating = False
+        if "raw_text_backup" not in st.session_state:
+            st.session_state.raw_text_backup = None
+        
+        # RERUN RECOVERY: If is_generating is stuck True but no thread is running,
+        # and we have a raw_text_backup, recover the reading
+        if st.session_state.is_generating and st.session_state.get("raw_text_backup") and not st.session_state.final_html:
+            recovered = st.session_state.raw_text_backup
+            if "<!DOCTYPE html>" not in recovered:
+                recovered_clean = recovered.replace("```html", "").replace("```", "")
+                st.session_state.final_html = HTML_TEMPLATE_START + recovered_clean + HTML_TEMPLATE_END
+            else:
+                st.session_state.final_html = recovered.replace("```html", "").replace("```", "")
+            st.session_state.is_generating = False
+            st.session_state.last_status = "RECOVERED — READING READY (Rerun ile kurtarıldı)"
     
         # Show persisted status on rerun (survives page interactions)
         if st.session_state.is_generating and st.session_state.last_status:
@@ -568,23 +582,38 @@ with tab1:
                 
                 try:
                     # 1. GENERATE TEXT
-                    if "status_log" not in st.session_state:
-                        st.session_state.status_log = []
+                    st.session_state.status_log = []  # Clear old logs for fresh generation
+                    st.session_state.raw_text_backup = None  # Clear old backup
                     
                     def update_status(msg):
-                        # Clean status updates (No emojis)
-                        clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
-                        st.session_state.last_status = clean_msg.strip().upper()
-                        
-                        # Only append if it's new or the first one, to prevent flooding the log
-                        if not st.session_state.status_log or st.session_state.status_log[-1] != st.session_state.last_status:
-                            st.session_state.status_log.append(st.session_state.last_status)
+                        """Protected status updater - never crashes the pipeline."""
+                        try:
+                            # Clean status updates (No emojis)
+                            clean_msg = msg.replace("🔮", "").replace("🛡️", "").replace("✅", "").replace("⚠️", "").replace("👁️", "").replace("🧠", "").replace("📝", "")
+                            st.session_state.last_status = clean_msg.strip().upper()
                             
-                        # Show last 5 status lines so output is never blank
-                        recent = st.session_state.status_log[-5:]
-                        display = "\n\n".join([f"**SYSTEM STATUS:** `{s}`" for s in recent])
-                        status_container.markdown(display)
-                        # time.sleep(0.1)  # Removed sleep to make stream faster
+                            # Only append if it's new or the first one, to prevent flooding the log
+                            if not st.session_state.status_log or st.session_state.status_log[-1] != st.session_state.last_status:
+                                st.session_state.status_log.append(st.session_state.last_status)
+                                
+                            # Show last 5 status lines so output is never blank
+                            recent = st.session_state.status_log[-5:]
+                            display = "\n\n".join([f"**SYSTEM STATUS:** `{s}`" for s in recent])
+                            status_container.markdown(display)
+                        except Exception as status_err:
+                            # WebSocket might be disconnected - don't kill the pipeline
+                            print(f"STATUS UPDATE ERROR (non-fatal): {status_err}")
+                    
+                    def save_draft_immediately(draft_text):
+                        """Called by run_cycle immediately when QC approves, BEFORE memory/delivery."""
+                        st.session_state.raw_text_backup = draft_text
+                        # Also build and save final_html immediately
+                        if "<!DOCTYPE html>" not in draft_text:
+                            clean = draft_text.replace("```html", "").replace("```", "")
+                            st.session_state.final_html = HTML_TEMPLATE_START + clean + HTML_TEMPLATE_END
+                        else:
+                            st.session_state.final_html = draft_text.replace("```html", "").replace("```", "")
+                        print("DRAFT SAVED TO SESSION STATE (via result_callback)")
                     
                     st.markdown("### 🔮 DIVINING PROTOCOL ACTIVE (Stand By)")
                     
@@ -607,10 +636,25 @@ with tab1:
                         target_length=target_len,
                         generate_audio=audio_reading,
                         model_choice=selected_model_api,
-                        progress_callback=update_status
+                        progress_callback=update_status,
+                        result_callback=save_draft_immediately
                     )
                     
+                    # CRITICAL: Immediately save raw_text to session_state
+                    # This prevents data loss if Streamlit reruns before HTML is built
+                    st.session_state.raw_text_backup = raw_text
                     
+                    # 2. FORMAT HTML IMMEDIATELY (before any other operations)
+                    final_content = raw_text
+                    if "<!DOCTYPE html>" not in raw_text:
+                        final_content = raw_text.replace("```html", "").replace("```", "")
+                        full_html = HTML_TEMPLATE_START + final_content + HTML_TEMPLATE_END
+                    else:
+                        full_html = raw_text.replace("```html", "").replace("```", "")
+                    
+                    st.session_state.final_html = full_html
+                    
+                    # Now save all other results to session_state
                     st.session_state.delivery_msg = delivery_msg
                     st.session_state.audio_path = audio_path
                     st.session_state.last_usage = usage_stats
@@ -622,46 +666,42 @@ with tab1:
                         else:
                             update_status("SES URETILEMEDI - RAILWAY LOGLARINI KONTROL ET")
                     
-                    # 2. FORMAT HTML
                     update_status("COMPILING HTML ARCHITECTURE...")
-                    final_content = raw_text
-                    
-                    # Validation Logic
-                    if "<!DOCTYPE html>" not in raw_text:
-                        final_content = raw_text.replace("```html", "").replace("```", "")
-                        full_html = HTML_TEMPLATE_START + final_content + HTML_TEMPLATE_END
-                    else:
-                        full_html = raw_text.replace("```html", "").replace("```", "")
-    
-                    st.session_state.final_html = full_html
                     
                     # 3. GENERATE PDF
                     update_status("RENDERING DOCUMENT [PDF]...")
                     
-                    # Smart Filename Generation
-                    # Format: NesShine_[ClientName]_[Topic_Target]_[Timestamp].pdf
-                    
-                    # We already identified the client name earlier in the cycle
-                    # Let's clean the client name for filename usage
                     safe_client = "".join(x for x in brain.last_client_name if x.isalnum()) if hasattr(brain, 'last_client_name') else "Client"
-                    
-                    # Clean topic/target
                     safe_topic = "".join(x for x in reading_topic if x.isalnum())[:15]
-                    
                     pdf_filename = f"NesShine_{safe_client}_{safe_topic}_{int(time.time())}.pdf"
                     
-                    pdf_path = create_pdf(full_html, pdf_filename)
-                    st.session_state.pdf_path = pdf_path
+                    try:
+                        pdf_path = create_pdf(full_html, pdf_filename)
+                        st.session_state.pdf_path = pdf_path
+                    except Exception as pdf_e:
+                        print(f"PDF ERROR (non-fatal): {pdf_e}")
+                        st.session_state.pdf_path = None
                     
                     update_status("PROTOCOL COMPLETE")
                     st.session_state.is_generating = False
                     st.session_state.last_status = "PROTOCOL COMPLETE — READING READY"
-                    time.sleep(1)
+                    time.sleep(0.5)
+                    st.rerun()  # Force clean render with results
                     
                 except Exception as e:
                     st.session_state.is_generating = False
                     st.session_state.last_status = f"ERROR: {str(e)}"
                     status_container.error(f"SYSTEM FAILURE: {str(e)}")
+                    
+                    # RECOVERY: If raw_text was saved but final_html wasn't built
+                    if not st.session_state.final_html and st.session_state.get("raw_text_backup"):
+                        recovered = st.session_state.raw_text_backup
+                        if "<!DOCTYPE html>" not in recovered:
+                            recovered = recovered.replace("```html", "").replace("```", "")
+                            st.session_state.final_html = HTML_TEMPLATE_START + recovered + HTML_TEMPLATE_END
+                        else:
+                            st.session_state.final_html = recovered.replace("```html", "").replace("```", "")
+                        st.session_state.last_status = "RECOVERED — READING READY (PDF skipped)"
     
         # DISPLAY RESULTS
         if st.session_state.final_html:
@@ -669,29 +709,36 @@ with tab1:
             # ACTIONS BAR
             c1, c2 = st.columns([1,1])
             with c1:
-                if st.session_state.pdf_path:
-                    with open(st.session_state.pdf_path, "rb") as html_file:
-                        st.download_button(
-                            label="DOWNLOAD READING",
-                            data=html_file,
-                            file_name=os.path.basename(st.session_state.pdf_path),
-                            mime="text/html"
-                        )
+                if st.session_state.pdf_path and os.path.exists(st.session_state.pdf_path):
+                    try:
+                        with open(st.session_state.pdf_path, "rb") as html_file:
+                            st.download_button(
+                                label="DOWNLOAD READING",
+                                data=html_file,
+                                file_name=os.path.basename(st.session_state.pdf_path),
+                                mime="text/html"
+                            )
+                    except Exception as dl_err:
+                        st.warning(f"Download file error: {dl_err}")
             
             # AUDIO PLAYER (only if audio was generated)
-            if st.session_state.get("audio_path") and os.path.exists(st.session_state.audio_path):
+            if st.session_state.get("audio_path") and os.path.exists(str(st.session_state.audio_path)):
                 st.markdown("---")
                 st.markdown("<h3 style='text-align:center; color:#d4af37;'>🎧 PUT ON YOUR HEADPHONES</h3>", unsafe_allow_html=True)
                 st.markdown("<p style='text-align:center; color:#888; font-style:italic;'>Nes Shine is ready to speak.</p>", unsafe_allow_html=True)
-                with open(st.session_state.audio_path, "rb") as af:
-                    st.audio(af.read(), format="audio/mp3")
-                st.download_button(
-                    label="DOWNLOAD AUDIO [MP3]",
-                    data=open(st.session_state.audio_path, "rb"),
-                    file_name=os.path.basename(st.session_state.audio_path),
-                    mime="audio/mpeg",
-                    key="download_audio_btn"
-                )
+                try:
+                    with open(st.session_state.audio_path, "rb") as af:
+                        audio_data = af.read()
+                    st.audio(audio_data, format="audio/mp3")
+                    st.download_button(
+                        label="DOWNLOAD AUDIO [MP3]",
+                        data=audio_data,
+                        file_name=os.path.basename(st.session_state.audio_path),
+                        mime="audio/mpeg",
+                        key="download_audio_btn"
+                    )
+                except Exception as audio_err:
+                    st.warning(f"Audio dosyası yüklenemedi: {audio_err}")
             
             # DELIVERY MESSAGE
             if st.session_state.delivery_msg:

@@ -235,12 +235,15 @@ class OracleBrain:
             # Clean up the feedback to be ready for the medium
             return False, feedback
 
-    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", generate_audio=False, model_choice=None, progress_callback=None):
+    def run_cycle(self, order_note, reading_topic, client_email=None, target_length="8000", generate_audio=False, model_choice=None, progress_callback=None, result_callback=None):
         """
         Runs the full generation loop with Memory Integration.
         client_email: Client's email address - used as memory key for 100% accuracy
         generate_audio: If True, generates MP3 via ElevenLabs after approval.
         model_choice: The specific Gemini model to use for this generation.
+        result_callback: Called with (draft_text) immediately after QC approval,
+                         BEFORE memory save or delivery message. This allows the
+                         caller to persist the draft even if later steps fail.
         Returns: (reading_text, delivery_msg, usage_stats, audio_path)
         """
         
@@ -311,8 +314,21 @@ class OracleBrain:
             if approved:
                 self.usage_stats["qc_rounds"] = iteration
                 if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
+                
+                # CRITICAL: Save draft IMMEDIATELY via callback before any other operations
+                # This ensures the draft is persisted even if memory/delivery/audio fails
+                if result_callback:
+                    try:
+                        result_callback(draft)
+                    except Exception as e:
+                        print(f"RESULT CALLBACK ERROR (non-fatal): {e}")
+                
                 if progress_callback: progress_callback("Nes Shine Hafızaya Kaydediyor...")
-                self.update_memory(draft, memory_key, mem_mgr)
+                try:
+                    self.update_memory(draft, memory_key, mem_mgr)
+                except Exception as e:
+                    print(f"MEMORY SAVE ERROR (non-fatal): {e}")
+                    if progress_callback: progress_callback(f"Hafıza kaydı hatası (okuma etkilenmez): {str(e)[:100]}")
                 
                 # SAVE USAGE DATA
                 try:
@@ -344,9 +360,14 @@ class OracleBrain:
                         traceback.print_exc()
                         if progress_callback: progress_callback(f"AUDIO HATASI: {str(e)[:200]}")
                 
-                # DELIVERY MESSAGE
-                if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")
-                delivery_msg = self.generate_delivery_message(client_name, reading_topic)
+                # DELIVERY MESSAGE (wrapped in try/except to never lose the draft)
+                delivery_msg = ""
+                try:
+                    if progress_callback: progress_callback("Teslim mesajı hazırlanıyor...")
+                    delivery_msg = self.generate_delivery_message(client_name, reading_topic)
+                except Exception as e:
+                    print(f"DELIVERY MSG ERROR (non-fatal): {e}")
+                    delivery_msg = f"Hi {client_name}, your reading is ready. Take a quiet moment to receive it. — Nes"
                 
                 return draft, delivery_msg, self.usage_stats, audio_path
             
@@ -388,7 +409,7 @@ class OracleBrain:
         return codecs.decode(text, 'rot_13')
 
     def generate_with_retry(self, model, prompt, progress_callback=None):
-        """Wrapper for generate_content with API Key Rotation & Infinite Retry, plus ROT13 Block bypass"""
+        """Wrapper for generate_content with API Key Rotation & Retry, plus ROT13 Block bypass"""
         from google.api_core import exceptions
         import time
         
@@ -396,11 +417,12 @@ class OracleBrain:
         blocked_retries = 0
         consecutive_exhaustions = 0
         max_blocked_retries = 3
+        MAX_ATTEMPTS = 50  # Safety cap to prevent truly infinite loops
         
         current_prompt = prompt
         is_rot13_active = False
 
-        while True:
+        while attempt < MAX_ATTEMPTS:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
@@ -506,7 +528,10 @@ class OracleBrain:
                     print(err_msg)
                     if progress_callback: progress_callback(err_msg)
                     
-                    while True:
+                    # Rotate to next valid key (with guard against infinite loop)
+                    rotation_guard = 0
+                    while rotation_guard < len(self.api_keys):
+                        rotation_guard += 1
                         self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
                         if self.api_keys[self.current_key_index]:
                             self._configure_genai()
@@ -522,14 +547,18 @@ class OracleBrain:
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
+        
+        # If we exit the loop (max attempts reached), raise an error
+        raise Exception(f"API çağrısı {MAX_ATTEMPTS} denemeden sonra başarısız oldu. Lütfen tekrar deneyin.")
                     
     def stream_with_retry(self, model, prompt, progress_callback=None):
-        """Streaming Generator Wrapper for generate_content with API Key Rotation & Infinite Retry"""
+        """Streaming Generator Wrapper for generate_content with API Key Rotation & Retry"""
         from google.api_core import exceptions
         import time
         
         attempt = 0
-        while True:
+        MAX_ATTEMPTS = 30  # Safety cap
+        while attempt < MAX_ATTEMPTS:
             attempt += 1
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
@@ -577,8 +606,10 @@ class OracleBrain:
                     print(f"WARNING STREAM: API Key Exhausted (429). Attempting rotation... ({self.stream_exhaustion_count}/{len(self.api_keys)})")
                     if progress_callback: progress_callback(f"API Limiti (429). Yedek Anahtara Geçiliyor... ({self.stream_exhaustion_count}/{len(self.api_keys)})")
                     
-                    original_index = self.current_key_index
-                    while True:
+                    # Rotate key with guard against infinite loop
+                    rotation_guard = 0
+                    while rotation_guard < len(self.api_keys):
+                        rotation_guard += 1
                         self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
                         if self.api_keys[self.current_key_index]:
                             self._configure_genai()
@@ -590,6 +621,9 @@ class OracleBrain:
                 print(err_msg)
                 if progress_callback: progress_callback(err_msg)
                 time.sleep(10)
+        
+        # If we exit the loop (max attempts reached), yield error message
+        yield f"\n\n[HATA: {MAX_ATTEMPTS} deneme sonrası üretim başarısız oldu. Lütfen tekrar deneyin.]"
 
 
 
