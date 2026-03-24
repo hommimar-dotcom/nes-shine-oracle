@@ -9,6 +9,7 @@ from prompts import HTML_TEMPLATE_START, HTML_TEMPLATE_END
 from memory import MemoryManager # Explicit import
 import google.generativeai as genai
 import pandas as pd
+import streamlit.components.v1 as components
 
 # INIT MEMORY MANAGER (GLOBAL WITH CACHE)
 @st.cache_resource
@@ -705,6 +706,9 @@ with tab1:
     
         # DISPLAY RESULTS
         if st.session_state.final_html:
+            
+            # RENDER THE ACTUAL HTML TO THE SCREEN
+            components.html(st.session_state.final_html, height=800, scrolling=True)
             
             # ACTIONS BAR
             c1, c2 = st.columns([1,1])
