@@ -189,6 +189,9 @@ class OracleBrain:
         last_update = time.time()
         
         for chunk in response_stream:
+            if chunk == "__RESET_STREAM__":
+                full_text = ""
+                continue
             full_text += chunk
             if progress_callback and time.time() - last_update > 4.0:
                 progress_callback(f"Nes Shine Tünelliyor... ({len(full_text)} harf dokundu)")
@@ -478,6 +481,16 @@ class OracleBrain:
                 self._track_usage(response)
                 consecutive_exhaustions = 0
                 
+                # Test text extraction to catch "finish_reason 19" empty part errors
+                try:
+                    _ = response.text
+                except ValueError as ve:
+                    err_msg = f"API YANIT HATASI (Bos Icerik/Block): {str(ve)[:80]}. 5s bekleyip tekrar deniyor..."
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    time.sleep(5)
+                    continue
+                
                 # Decode if we used ROT13
                 if is_rot13_active and response.text:
                     decoded_text = self._decode_rot13(response.text)
@@ -560,6 +573,7 @@ class OracleBrain:
         MAX_ATTEMPTS = 30  # Safety cap
         while attempt < MAX_ATTEMPTS:
             attempt += 1
+            yield "__RESET_STREAM__"  # Tell caller to clear its buffer
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                 response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 300})

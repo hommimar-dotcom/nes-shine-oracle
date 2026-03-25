@@ -406,6 +406,17 @@ class SpellBrain:
                 response = target_model.generate_content(prompt, request_options={'timeout': 300})
                 self._track_usage(response)
                 consecutive_exhaustions = 0
+                
+                # Test text extraction to catch "finish_reason 19" empty part errors
+                try:
+                    _ = response.text
+                except ValueError as ve:
+                    err_msg = f"API YANIT HATASI (Bos Icerik/Block): {str(ve)[:80]}. 5s bekleyip tekrar deniyor..."
+                    print(err_msg)
+                    if progress_callback: progress_callback(err_msg)
+                    time.sleep(5)
+                    continue
+                    
                 return response
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError, exceptions.RetryError) as e:
                 if self.current_model_name != self.FALLBACK_MODEL:
