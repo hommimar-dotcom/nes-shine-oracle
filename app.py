@@ -511,7 +511,7 @@ with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         # SADECE 3.1 PRO (Arayüz seçimi kaldırıldı)
-        selected_model_api = "gemini-3.1-pro-preview"
+        selected_model_api = "gemini-2.5-pro"
         
         st.markdown("<br>", unsafe_allow_html=True)
         audio_reading = st.checkbox("🎙️ AUDIO READING (+$6 ElevenLabs)", value=False, help="Sesli okuma üretir. İşaretlemezsen normal metin okuması yapılır.")

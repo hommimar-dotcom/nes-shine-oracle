@@ -6,12 +6,13 @@ import google.generativeai as genai
 from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_ID_PROMPT, MEMORY_UPDATE_PROMPT
 
 class OracleBrain:
-    # SADECE Gemini 3 Pro - BAŞKA MODEL KULLANILMAZ
-    PRIMARY_MODEL = "gemini-3.1-pro-preview"
-    
-    # Gemini 3.1 Pro Pricing (USD per million tokens, <200K context)
-    PRICE_INPUT_PER_M = 2.00
-    PRICE_OUTPUT_PER_M = 12.00
+    # Gemini 2.5 Hybrid System
+    PRIMARY_MODEL = "gemini-2.5-pro"
+    EXTRACTION_MODEL = "gemini-2.5-flash"
+
+    # Gemini Model Pricing (Mix of Pro and Flash roughly)
+    PRICE_INPUT_PER_M = 1.00 # Reduced estimation
+    PRICE_OUTPUT_PER_M = 10.00
     
     def __init__(self, api_keys):
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
@@ -36,19 +37,25 @@ class OracleBrain:
         """Extract and accumulate token usage from a Gemini response."""
         try:
             meta = response.usage_metadata
-            if meta:
+            if meta and (meta.prompt_token_count or meta.candidates_token_count):
                 t_in = meta.prompt_token_count or 0
                 t_out = meta.candidates_token_count or 0
-                self.usage_stats["tokens_in"] += t_in
-                self.usage_stats["tokens_out"] += t_out
-                self.usage_stats["total_tokens"] += (t_in + t_out)
-                self.usage_stats["api_calls"] += 1
-                # Calculate cost
-                cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
-                self.usage_stats["cost_usd"] += cost
-                print(f"USAGE: +{t_in} in / +{t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
+                self._track_usage_raw(t_in, t_out, estimated=False)
+                return True  # Real metadata captured
         except Exception as e:
             print(f"USAGE TRACKING ERROR: {e}")
+        return False  # Metadata missing
+
+    def _track_usage_raw(self, t_in, t_out, estimated=False):
+        """Directly accumulate token counts. Used when streaming metadata is unavailable."""
+        self.usage_stats["tokens_in"] += t_in
+        self.usage_stats["tokens_out"] += t_out
+        self.usage_stats["total_tokens"] += (t_in + t_out)
+        self.usage_stats["api_calls"] += 1
+        cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+        self.usage_stats["cost_usd"] += cost
+        label = "~ESTIMATED" if estimated else "REAL"
+        print(f"USAGE ({label}): {t_in} in / {t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
 
     def _configure_genai(self):
         current_key = self.api_keys[self.current_key_index]
@@ -89,7 +96,7 @@ class OracleBrain:
             top_k=64,
         )
         self.extraction_model = genai.GenerativeModel(
-            self.current_model_name,
+            self.EXTRACTION_MODEL,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
@@ -309,10 +316,10 @@ class OracleBrain:
             
             approved, review_notes = self.grandmaster_agent(draft, order_note, target_length, progress_callback=progress_callback)
             
-            if approved and iteration < 4:
+            if approved and iteration < 2:
                 approved = False
                 review_notes = "Metin teknik olarak onaylanabilir düzeyde, ancak yeterince ruh ve derinlik barındırmıyor. Mistik detayları, duyusal betimlemeleri ve Nes Shine'ın imzası olan otoriter, karanlık enerjiyi çok daha fazla hissettirerek metni GENİŞLET ve BAŞTAN YAZ. Bu bir asgari kalite testidir, henüz mükemmel değil."
-                if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/4). Metin Derinleştiriliyor...")
+                if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/2). Metin Derinleştiriliyor...")
 
             if approved:
                 self.usage_stats["qc_rounds"] = iteration
@@ -398,7 +405,7 @@ class OracleBrain:
             safety_settings=self.safety_settings
         )
         self.extraction_model = genai.GenerativeModel(
-            self.current_model_name,
+            self.EXTRACTION_MODEL,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
@@ -612,17 +619,37 @@ class OracleBrain:
             yield "__RESET_STREAM__"  # Tell caller to clear its buffer
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
+
+                # Count input tokens EXACTLY before streaming (free Google API call)
+                exact_in = 0
+                try:
+                    count_resp = target_model.count_tokens(prompt)
+                    exact_in = count_resp.total_tokens
+                except:
+                    exact_in = len(str(prompt)) // 4  # fallback only if count_tokens fails
+
                 response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 300})
                 full_text = ""
                 for chunk in response:
                     full_text += chunk.text
                     yield chunk.text
                 
+                # Try real streaming metadata first
+                tracked = False
                 try:
-                    if hasattr(response, 'usage_metadata'):
-                        self._track_usage(response)
+                    tracked = self._track_usage(response)
                 except:
                     pass
+                
+                if not tracked:
+                    # Real metadata unavailable — count output tokens exactly
+                    exact_out = 0
+                    try:
+                        out_count_resp = target_model.count_tokens(full_text)
+                        exact_out = out_count_resp.total_tokens
+                    except:
+                        exact_out = len(full_text) // 4  # fallback only if count_tokens fails
+                    self._track_usage_raw(exact_in, exact_out, estimated=False)
                 return
             except (exceptions.DeadlineExceeded, exceptions.ServiceUnavailable, exceptions.InternalServerError) as e:
                 if self.current_model_name != self.FALLBACK_MODEL:

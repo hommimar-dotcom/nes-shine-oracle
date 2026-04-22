@@ -1,45 +1,38 @@
-import sys
+import json
+import traceback
 import google.generativeai as genai
-from memory import MemoryManager
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# Ensure UTF-8 output
-sys.stdout.reconfigure(encoding='utf-8')
-
-print("--- 3.1 PRO API KEY DIAGNOSTICS ---")
-
-# Load keys
-mm = MemoryManager()
-keys = mm.load_settings().get('api_keys', [])
-
-print(f"Testing {len(keys)} keys...\n")
-
-if not keys:
-    print("NO KEYS FOUND IN APP_SETTINGS.JSON")
-    sys.exit(0)
-
-# The production safety settings
-safety_settings = {
-    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-}
-
-for i, k in enumerate(keys):
-    masked_key = f"{k[:10]}..." if len(k) > 10 else "INVALID"
-    try:
-        genai.configure(api_key=k)
-        model = genai.GenerativeModel(
-            model_name='gemini-3.1-pro-preview',
-            safety_settings=safety_settings
-        )
-        response = model.generate_content("Ping. Reply 'Pong' if active.")
-        print(f"Key {i+1} ({masked_key}): SUCCESS - Active for gemini-3.1-pro-preview")
-    except Exception as e:
-        error_name = type(e).__name__
-        error_msg = str(e).split('\n')[0] # Only get first line of error
-        print(f"Key {i+1} ({masked_key}): FAILED - {error_name}")
-        print(f"  -> {error_msg}")
-
-print("\n--- DIAGNOSTICS COMPLETE ---")
+try:
+    with open('app_settings.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    keys = data.get('api_keys', [])
+    valid_keys = [k.strip() for k in keys if k.strip()]
+    
+    print(f"Loaded {len(valid_keys)} valid keys.")
+    if not valid_keys:
+        print("No valid keys found.")
+        exit(1)
+        
+    print(f"Testing the first key: {valid_keys[0][:10]}...")
+    genai.configure(api_key=valid_keys[0])
+    
+    print("Fetching models...")
+    for m in genai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            print(f"- {m.name}")
+    
+    print("Testing gemini-2.5-pro...")
+    model25 = genai.GenerativeModel('gemini-2.5-pro')
+    res25 = model25.generate_content('Hello')
+    print("Model 2.5 response:", res25.text)
+    
+    print("Testing gemini-3.1-pro-preview...")
+    model31 = genai.GenerativeModel('gemini-3.1-pro-preview')
+    res = model31.generate_content('Hello')
+    print("Response:", res.text)
+    
+except Exception as e:
+    print("\n--- ERROR ---")
+    print(type(e).__name__)
+    print(e)
+    traceback.print_exc()

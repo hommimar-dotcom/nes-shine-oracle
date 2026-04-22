@@ -20,7 +20,8 @@ class SpellBrain:
     Uses the SAME API key rotation and retry logic.
     """
     # SADECE 3.1 PRO (Kalite için taviz verilmeyecek)
-    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    PRIMARY_MODEL = "gemini-2.5-pro"
+    EXTRACTION_MODEL = "gemini-2.5-flash"
     PRICE_INPUT_PER_M = 2.00
     PRICE_OUTPUT_PER_M = 12.00
     
@@ -92,7 +93,7 @@ class SpellBrain:
             top_k=64,
         )
         self.extraction_model = genai.GenerativeModel(
-            self.current_model_name,
+            self.EXTRACTION_MODEL,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
@@ -484,7 +485,7 @@ class SpellBrain:
             safety_settings=self.safety_settings
         )
         self.extraction_model = genai.GenerativeModel(
-            self.current_model_name,
+            self.EXTRACTION_MODEL,
             generation_config=self.extraction_config,
             safety_settings=self.safety_settings
         )
