@@ -13,6 +13,8 @@ class OracleBrain:
     # Gemini Model Pricing (Mix of Pro and Flash roughly)
     PRICE_INPUT_PER_M = 1.00 # Reduced estimation
     PRICE_OUTPUT_PER_M = 10.00
+    PRICE_IN_FLASH = 0.15
+    PRICE_OUT_FLASH = 0.60
     
     def __init__(self, api_keys):
         self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
@@ -33,7 +35,7 @@ class OracleBrain:
             "qc_rounds": 0
         }
     
-    def _track_usage(self, response):
+    def _track_usage(self, response, used_model_name=None):
         """Extract and accumulate token usage from a Gemini response."""
         try:
             meta = response.usage_metadata
@@ -52,7 +54,11 @@ class OracleBrain:
         self.usage_stats["tokens_out"] += t_out
         self.usage_stats["total_tokens"] += (t_in + t_out)
         self.usage_stats["api_calls"] += 1
-        cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+        active_mod = used_model_name or self.current_model_name
+                if "pro" in active_mod.lower():
+                    cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+                else:
+                    cost = (t_in / 1_000_000 * self.PRICE_IN_FLASH) + (t_out / 1_000_000 * self.PRICE_OUT_FLASH)
         self.usage_stats["cost_usd"] += cost
         label = "~ESTIMATED" if estimated else "REAL"
         print(f"USAGE ({label}): {t_in} in / {t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
@@ -485,7 +491,7 @@ class OracleBrain:
                     time.sleep(5)
                     continue
                 
-                self._track_usage(response)
+                self._track_usage(response, getattr(target_model, 'model_name', None))
                 consecutive_exhaustions = 0
                 
                 # Test text extraction to catch "finish_reason 19" empty part errors
@@ -637,7 +643,7 @@ class OracleBrain:
                 # Try real streaming metadata first
                 tracked = False
                 try:
-                    tracked = self._track_usage(response)
+                    tracked = self._track_usage(response, getattr(target_model, 'model_name', None))
                 except:
                     pass
                 

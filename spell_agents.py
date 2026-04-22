@@ -43,7 +43,7 @@ class SpellBrain:
             "qc_rounds": 0
         }
     
-    def _track_usage(self, response):
+    def _track_usage(self, response, used_model_name=None):
         try:
             meta = response.usage_metadata
             if meta:
@@ -53,7 +53,11 @@ class SpellBrain:
                 self.usage_stats["tokens_out"] += t_out
                 self.usage_stats["total_tokens"] += (t_in + t_out)
                 self.usage_stats["api_calls"] += 1
-                cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+                active_mod = used_model_name or self.current_model_name
+                if "pro" in active_mod.lower():
+                    cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+                else:
+                    cost = (t_in / 1_000_000 * self.PRICE_IN_FLASH) + (t_out / 1_000_000 * self.PRICE_OUT_FLASH)
                 self.usage_stats["cost_usd"] += cost
                 print(f"SPELL USAGE: +{t_in} in / +{t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
         except Exception as e:
@@ -405,7 +409,7 @@ class SpellBrain:
             try:
                 target_model = self.model if getattr(model, 'model_name', None) == self.model.model_name else self.extraction_model
                 response = target_model.generate_content(prompt, request_options={'timeout': 300})
-                self._track_usage(response)
+                self._track_usage(response, getattr(target_model, 'model_name', None))
                 consecutive_exhaustions = 0
                 
                 # Test text extraction to catch "finish_reason 19" empty part errors
