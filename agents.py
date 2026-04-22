@@ -42,23 +42,23 @@ class OracleBrain:
             if meta and (meta.prompt_token_count or meta.candidates_token_count):
                 t_in = meta.prompt_token_count or 0
                 t_out = meta.candidates_token_count or 0
-                self._track_usage_raw(t_in, t_out, estimated=False)
+                self._track_usage_raw(t_in, t_out, estimated=False, used_model_name=used_model_name)
                 return True  # Real metadata captured
         except Exception as e:
             print(f"USAGE TRACKING ERROR: {e}")
         return False  # Metadata missing
 
-    def _track_usage_raw(self, t_in, t_out, estimated=False):
+    def _track_usage_raw(self, t_in, t_out, estimated=False, used_model_name=None):
         """Directly accumulate token counts. Used when streaming metadata is unavailable."""
         self.usage_stats["tokens_in"] += t_in
         self.usage_stats["tokens_out"] += t_out
         self.usage_stats["total_tokens"] += (t_in + t_out)
         self.usage_stats["api_calls"] += 1
         active_mod = used_model_name or self.current_model_name
-                if "pro" in active_mod.lower():
-                    cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
-                else:
-                    cost = (t_in / 1_000_000 * self.PRICE_IN_FLASH) + (t_out / 1_000_000 * self.PRICE_OUT_FLASH)
+        if "pro" in active_mod.lower():
+            cost = (t_in / 1_000_000 * self.PRICE_INPUT_PER_M) + (t_out / 1_000_000 * self.PRICE_OUTPUT_PER_M)
+        else:
+            cost = (t_in / 1_000_000 * self.PRICE_IN_FLASH) + (t_out / 1_000_000 * self.PRICE_OUT_FLASH)
         self.usage_stats["cost_usd"] += cost
         label = "~ESTIMATED" if estimated else "REAL"
         print(f"USAGE ({label}): {t_in} in / {t_out} out = ${cost:.4f} (Running: ${self.usage_stats['cost_usd']:.4f})")
