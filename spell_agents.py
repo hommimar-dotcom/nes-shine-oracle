@@ -70,6 +70,7 @@ class SpellBrain:
         
         # High creativity for ritual writing
         self.generation_config = genai.types.GenerationConfig(
+            max_output_tokens=8192,
             temperature=1.3,
             top_p=0.95,
             top_k=64
@@ -92,6 +93,7 @@ class SpellBrain:
         
         # Low temp for diagnostics, extraction, QC
         self.extraction_config = genai.types.GenerationConfig(
+            max_output_tokens=8192,
             temperature=0.3,
             top_p=0.95,
             top_k=64,
