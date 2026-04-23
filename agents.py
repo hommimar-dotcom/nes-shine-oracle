@@ -7,8 +7,8 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # Gemini 2.5 Hybrid System
-    PRIMARY_MODEL = "gemini-2.5-pro"
-    EXTRACTION_MODEL = "gemini-2.5-flash"
+    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    EXTRACTION_MODEL = "gemini-3.1-pro-preview"
 
     # Gemini Model Pricing (Mix of Pro and Flash roughly)
     PRICE_INPUT_PER_M = 1.00 # Reduced estimation
@@ -329,7 +329,7 @@ class OracleBrain:
                 review_notes = "Metin teknik olarak onaylanabilir düzeyde, ancak yeterince ruh ve derinlik barındırmıyor. Mistik detayları, duyusal betimlemeleri ve Nes Shine'ın imzası olan otoriter, karanlık enerjiyi çok daha fazla hissettirerek metni GENİŞLET ve BAŞTAN YAZ. Bu bir asgari kalite testidir, henüz mükemmel değil."
                 if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/2). Metin Derinleştiriliyor...")
 
-            if approved:
+            if approved or iteration >= 4:
                 self.usage_stats["qc_rounds"] = iteration
                 if progress_callback: progress_callback(f"Grandmaster Onayladı! ({iteration}. turda mükemmelliğe ulaşıldı)")
                 

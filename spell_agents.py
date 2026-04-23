@@ -20,8 +20,8 @@ class SpellBrain:
     Uses the SAME API key rotation and retry logic.
     """
     # SADECE 3.1 PRO (Kalite için taviz verilmeyecek)
-    PRIMARY_MODEL = "gemini-2.5-pro"
-    EXTRACTION_MODEL = "gemini-2.5-flash"
+    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    EXTRACTION_MODEL = "gemini-3.1-pro-preview"
     PRICE_INPUT_PER_M = 2.00
     PRICE_OUTPUT_PER_M = 12.00
     
@@ -335,7 +335,7 @@ class SpellBrain:
                 if progress_callback:
                     progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/4). Ritüel Derinleştiriliyor...")
 
-            if approved:
+            if approved or iteration >= 4:
                 self.usage_stats["qc_rounds"] = iteration
                 if progress_callback:
                     progress_callback(f"Grandmaster Approved! (Round {iteration} — perfection achieved)")

@@ -103,7 +103,7 @@ def render_spell_page(valid_keys, mem_mgr):
         st.markdown("<br>", unsafe_allow_html=True)
         
         # SADECE 3.1 PRO (Arayüz seçimi kaldırıldı)
-        selected_spell_model_api = "gemini-2.5-pro"
+        selected_spell_model_api = "gemini-3.1-pro-preview"
         
         st.markdown("<br>", unsafe_allow_html=True)
         
