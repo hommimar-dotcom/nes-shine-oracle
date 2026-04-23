@@ -324,10 +324,10 @@ class OracleBrain:
             
             approved, review_notes = self.grandmaster_agent(draft, order_note, target_length, progress_callback=progress_callback)
             
-            if approved and iteration < 2:
+            if approved and iteration < 4:
                 approved = False
                 review_notes = "Metin teknik olarak onaylanabilir düzeyde, ancak yeterince ruh ve derinlik barındırmıyor. Mistik detayları, duyusal betimlemeleri ve Nes Shine'ın imzası olan otoriter, karanlık enerjiyi çok daha fazla hissettirerek metni GENİŞLET ve BAŞTAN YAZ. Bu bir asgari kalite testidir, henüz mükemmel değil."
-                if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/2). Metin Derinleştiriliyor...")
+                if progress_callback: progress_callback(f"Asgari Kalite Zorunluluğu (Tur {iteration}/4). Metin Derinleştiriliyor...")
 
             if approved or iteration >= 4:
                 self.usage_stats["qc_rounds"] = iteration
