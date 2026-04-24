@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,300;0,400;0,600;1,400&family=Pinyon+Script&display=swap');
+
+:root {
+    --accent: #4fc3f7;
+    --accent-dark: #0d47a1;
+    --gold: #b0c4de;
+    --bg: #060b1e;
+    --text: #c8d6e5;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+html, body {
+    margin: 0; padding: 0;
+    background-color: var(--bg);
+    color: var(--gold);
+    font-family: 'Lora', serif;
+    width: 100%; overflow-x: hidden;
+}
+
+body { line-height: 2.4; font-size: 25px; overflow-wrap: break-word; }
+
+.page-wrapper {
+    width: 100%; max-width: 1100px; margin: 0 auto; padding: 120px 60px;
+    background: radial-gradient(circle at center, #0e1a3a 0%, #040810 100%);
+    border-left: 3px solid rgba(79, 195, 247, 0.3);
+    border-right: 3px solid rgba(79, 195, 247, 0.3);
+    box-shadow: 0 0 300px rgba(13, 71, 161, 0.4);
+    position: relative;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    text-align: center;
+    font-size: clamp(40px, 7vw, 75px);
+    letter-spacing: clamp(8px, 2vw, 20px);
+    color: #e8eaf6;
+    text-transform: uppercase;
+    margin: 0 0 50px 0;
+    text-shadow: 0 0 80px rgba(79, 195, 247, 0.4);
+    border-bottom: 2px solid rgba(79, 195, 247, 0.25);
+    padding-bottom: 50px;
+}
+
+.subtitle {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(14px, 2.2vw, 22px);
+    letter-spacing: 12px;
+    color: #5c7a99;
+    margin: -30px 0 160px 0;
+    text-transform: uppercase;
+}
+
+h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 4vw, 48px);
+    color: #e8eaf6;
+    margin: 180px 0 90px 0;
+    border-left: 16px solid var(--accent-dark);
+    padding: 25px 0 25px 50px;
+    letter-spacing: 10px;
+    background: linear-gradient(90deg, rgba(13, 71, 161, 0.4), transparent);
+    text-transform: uppercase;
+}
+
+p {
+    text-align: justify;
+    margin-bottom: 80px;
+    color: var(--text);
+    font-weight: 300;
+    letter-spacing: 1.2px;
+}
+
+.dropcap {
+    float: left;
+    font-family: 'Pinyon Script', cursive;
+    font-size: clamp(130px, 16vw, 220px);
+    line-height: 0.8;
+    padding: 25px 35px 0 0;
+    color: var(--accent);
+    text-shadow: 10px 10px 80px rgba(0,0,0,0.8);
+}
+
+.highlightbox {
+    border: 3px solid var(--accent-dark);
+    background-color: rgba(13, 71, 161, 0.15);
+    padding: clamp(40px, 7vw, 100px);
+    margin: 160px 0;
+    box-shadow: inset 0 0 200px rgba(0,0,0,0.8);
+}
+
+.chantblock {
+    text-align: center;
+    margin: 200px 0;
+    padding: 130px 50px;
+    border-top: 3px solid var(--accent-dark);
+    border-bottom: 3px solid var(--accent-dark);
+    background: radial-gradient(circle, rgba(13, 71, 161, 0.5) 0%, rgba(0,0,0,0) 85%);
+}
+
+.latinverse {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 4vw, 46px);
+    color: var(--accent);
+    margin-bottom: 50px;
+    letter-spacing: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.englishverse {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: clamp(20px, 3.2vw, 40px);
+    color: #8899aa;
+}
+
+.warningseal {
+    color: var(--accent);
+    text-align: center;
+    border: 8px solid var(--accent-dark);
+    padding: 100px 50px;
+    margin-top: 300px;
+    letter-spacing: 18px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(18px, 2.8vw, 30px);
+    background-color: #070d1f;
+    text-transform: uppercase;
+}
+
+.signature {
+    text-align: right;
+    font-family: 'Pinyon Script', cursive;
+    font-size: clamp(100px, 16vw, 200px);
+    color: var(--accent);
+    margin-top: 300px;
+    padding-right: 10%;
+    opacity: 0.9;
+    text-shadow: 0 0 120px rgba(79, 195, 247, 0.6);
+}
+
+.archivefooter {
+    text-align: center; font-size: 18px; color: #445566;
+    margin-top: 500px; letter-spacing: 25px; text-transform: uppercase;
+    font-family: 'Playfair Display', serif;
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+<h1>Echoes From the Starfield</h1>
+<div class="subtitle">A Celestial Soul Reading for Jessica</div>
+
+<p><span class="dropcap">T</span>here's a stillness around you tonight, Jessica. Not the peaceful kind. The kind that comes right before something cracks open. I felt it the moment your energy touched mine, like standing at the edge of a frozen lake, knowing the ice is about to give way. You've been holding yourself so still, so carefully, that you've forgotten movement is even an option.</p>
+
+<p>Something shifted in you about three weeks ago. You probably didn't notice it consciously. But there was a moment, maybe late at night, maybe in the middle of something ordinary, where a thought crossed your mind that you immediately tried to push away. That thought? It was the truest thing you've felt in months. And you're terrified of it.</p>
+
+<h2>The Constellation of Your Heart</h2>
+
+<p>Let me tell you what I see when I look at the energy between you and Marcus. It's not dead. I want to be clear about that. But it's dormant in a way that worries me. Like a star that's burned through most of its fuel and is now just glowing on borrowed time. He loves you. I believe that. But his love has become comfortable, and comfortable love is dangerous when you're someone who needs fire.</p>
+
+<p>Your throat chakra is practically screaming at me right now. All those conversations you've rehearsed in your head, all those things you wanted to say but swallowed instead. They're living in your body, Jessica. They've taken up residence in your shoulders, in that tension you carry behind your eyes. You won't be free until you let them out.</p>
+
+<div class="highlightbox">
+<p>You've been asking the universe to send you a sign, but the signs have been everywhere. You've just been afraid that if you acknowledge them, you'll have to act. And acting means changing something. And change, for you right now, feels like dying. But it isn't. It's the exact opposite.</p>
+</div>
+
+<h2>The Tides Ahead</h2>
+
+<p>Mid April is going to hit you differently. I'm seeing a conversation you don't expect, with someone you haven't spoken to in a long time. This person carries a message, whether they know it or not. Pay attention to what they say casually, because the universe often speaks through the mouths of people who have no idea they're being used as messengers.</p>
+
+<p>Your dreams have been strange lately, haven't they? Water everywhere. Sometimes you're swimming, sometimes drowning, sometimes just standing at the shore watching something disappear into the waves. This is your subconscious processing what your waking mind refuses to touch. Don't fight it. Let the water do its work.</p>
+
+<div class="chantblock">
+    <div class="latinverse">Per Aspera Ad Astra</div>
+    <div class="englishverse">"Through hardships to the stars."</div>
+</div>
+
+<p>There's one more thing I need to tell you before I close this channel. Around the last week of April, trust your body over your mind. Your intellect has been running the show for too long, making every decision based on logic and fear disguised as reason. Your body knows things your brain doesn't. When your stomach tightens or your chest opens, when your hands go cold or warm. Those are messages. Start listening.</p>
+
+<div class="warningseal">This reading is sealed beneath starlight. The frequencies spoken here now move through the astral field.</div>
+
+<div class="signature">Luna Veil</div>
+<div class="archivefooter">
+    SESSION ID: 441-LUNAR-PISCES // STATUS: SEALED
+</div>
+</div>
+</body>
+</html>

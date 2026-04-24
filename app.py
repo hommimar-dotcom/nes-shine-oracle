@@ -511,7 +511,7 @@ with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         # SADECE 3.1 PRO (Arayüz seçimi kaldırıldı)
-        selected_model_api = "gemini-2.5-pro"
+        selected_model_api = "gemini-3.1-pro-preview"
         
         st.markdown("<br>", unsafe_allow_html=True)
         audio_reading = st.checkbox("🎙️ AUDIO READING (+$6 ElevenLabs)", value=False, help="Sesli okuma üretir. İşaretlemezsen normal metin okuması yapılır.")
@@ -851,7 +851,7 @@ with tab2:
                             item["reading_topic"],
                             client_email=item["client_email"],
                             target_length=item["target_length"],
-                            model_choice=item.get("model_choice", "gemini-2.5-pro") # STRICT FALLBACK TO HQ MODEL
+                            model_choice=item.get("model_choice", "gemini-3.1-pro-preview") # STRICT FALLBACK TO HQ MODEL
                         )
                         
                         # Generate PDF
@@ -887,7 +887,7 @@ with tab2:
             q_topic = st.text_input("Topic", placeholder="Love, Career...")
             q_note = st.text_area("Notes", placeholder="Context...", height=100)
             q_length = st.selectbox("Depth", ["8000", "12000"])
-            q_model = "gemini-2.5-pro" # Form arkasında sabitlendi
+            q_model = "gemini-3.1-pro-preview" # Form arkasında sabitlendi
             
             if st.form_submit_button("ADD TO QUEUE", use_container_width=True):
                 if q_email and q_topic:

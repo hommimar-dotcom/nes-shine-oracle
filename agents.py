@@ -7,8 +7,8 @@ from prompts import NES_SHINE_CORE_INSTRUCTIONS, GRANDMASTER_QC_PROMPT, CLIENT_I
 
 class OracleBrain:
     # Gemini 2.5 Hybrid System
-    PRIMARY_MODEL = "gemini-2.5-pro"
-    EXTRACTION_MODEL = "gemini-2.5-pro"
+    PRIMARY_MODEL = "gemini-3.1-pro-preview"
+    EXTRACTION_MODEL = "gemini-3.1-pro-preview"
 
     # Gemini Model Pricing (Mix of Pro and Flash roughly)
     PRICE_INPUT_PER_M = 1.00 # Reduced estimation

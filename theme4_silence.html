@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Sacramento&display=swap');
+
+:root {
+    --accent: #e8dcc8;
+    --accent-dark: #3e0000;
+    --burgundy: #6b0020;
+    --bg: #040404;
+    --text: #b8ad9e;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+html, body {
+    margin: 0; padding: 0;
+    background-color: var(--bg);
+    color: var(--accent);
+    font-family: 'Libre Baskerville', serif;
+    width: 100%; overflow-x: hidden;
+}
+
+body { line-height: 2.4; font-size: 24px; overflow-wrap: break-word; }
+
+.page-wrapper {
+    width: 100%; max-width: 1100px; margin: 0 auto; padding: 120px 60px;
+    background: radial-gradient(circle at center, #0f0808 0%, #030303 100%);
+    border-left: 1px solid rgba(107, 0, 32, 0.3);
+    border-right: 1px solid rgba(107, 0, 32, 0.3);
+    box-shadow: 0 0 200px rgba(62, 0, 0, 0.3);
+    position: relative;
+}
+
+h1 {
+    font-family: 'Bodoni Moda', serif;
+    text-align: center;
+    font-size: clamp(38px, 7vw, 80px);
+    letter-spacing: clamp(8px, 2vw, 24px);
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0 0 50px 0;
+    text-shadow: 0 0 60px rgba(232, 220, 200, 0.2);
+    border-bottom: 1px solid rgba(232, 220, 200, 0.15);
+    padding-bottom: 60px;
+    font-weight: 400;
+}
+
+.subtitle {
+    text-align: center;
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(13px, 2vw, 20px);
+    letter-spacing: 16px;
+    color: #665850;
+    margin: -30px 0 160px 0;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+h2 {
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(24px, 3.8vw, 46px);
+    color: var(--accent);
+    margin: 180px 0 90px 0;
+    border-left: 12px solid var(--burgundy);
+    padding: 25px 0 25px 50px;
+    letter-spacing: 10px;
+    background: linear-gradient(90deg, rgba(107, 0, 32, 0.3), transparent);
+    text-transform: uppercase;
+    font-weight: 400;
+}
+
+p {
+    text-align: justify;
+    margin-bottom: 80px;
+    color: var(--text);
+    font-weight: 400;
+    letter-spacing: 0.8px;
+    font-size: 24px;
+}
+
+.dropcap {
+    float: left;
+    font-family: 'Sacramento', cursive;
+    font-size: clamp(130px, 16vw, 220px);
+    line-height: 0.75;
+    padding: 20px 30px 0 0;
+    color: var(--burgundy);
+    text-shadow: 10px 10px 80px rgba(0,0,0,0.9);
+}
+
+.highlightbox {
+    border: 1px solid rgba(107, 0, 32, 0.4);
+    background-color: rgba(107, 0, 32, 0.08);
+    padding: clamp(40px, 7vw, 100px);
+    margin: 160px 0;
+    box-shadow: inset 0 0 200px rgba(0,0,0,0.6);
+}
+
+.chantblock {
+    text-align: center;
+    margin: 200px 0;
+    padding: 130px 50px;
+    border-top: 1px solid rgba(232, 220, 200, 0.15);
+    border-bottom: 1px solid rgba(232, 220, 200, 0.15);
+    background: radial-gradient(circle, rgba(62, 0, 0, 0.4) 0%, rgba(0,0,0,0) 80%);
+}
+
+.latinverse {
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(24px, 4vw, 44px);
+    color: var(--burgundy);
+    margin-bottom: 50px;
+    letter-spacing: 14px;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.englishverse {
+    font-family: 'Libre Baskerville', serif;
+    font-style: italic;
+    font-size: clamp(18px, 3vw, 36px);
+    color: #7a6b5e;
+}
+
+.warningseal {
+    color: var(--accent);
+    text-align: center;
+    border: 4px solid var(--burgundy);
+    padding: 100px 50px;
+    margin-top: 300px;
+    letter-spacing: 16px;
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(16px, 2.5vw, 28px);
+    background-color: #060404;
+    text-transform: uppercase;
+    font-weight: 400;
+}
+
+.signature {
+    text-align: right;
+    font-family: 'Sacramento', cursive;
+    font-size: clamp(100px, 16vw, 200px);
+    color: var(--burgundy);
+    margin-top: 300px;
+    padding-right: 10%;
+    opacity: 0.85;
+    text-shadow: 0 0 100px rgba(107, 0, 32, 0.4);
+}
+
+.archivefooter {
+    text-align: center; font-size: 16px; color: #443833;
+    margin-top: 500px; letter-spacing: 22px; text-transform: uppercase;
+    font-family: 'Bodoni Moda', serif;
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+<h1>The Silence Between Breaths</h1>
+<div class="subtitle">An Intimate Soul Reading for David</div>
+
+<p><span class="dropcap">I</span> want you to sit with this for a moment before you start reading, David. Close whatever else is open. Put the phone on silent. Because what I'm about to say isn't for the distracted version of you. It's for the one underneath. The one who lies awake at night replaying conversations that happened years ago, trying to figure out exactly where things went wrong. That version of you is the one I'm speaking to right now.</p>
+
+<p>You carry your pain with such composure that most people in your life have no idea how much weight is behind those eyes. They see the smile. They see the man who shows up, who handles things, who keeps the machinery running. What they don't see is the bone-deep tiredness of being the person everyone leans on while having no pillar of your own. I see it though. And I need you to know that seeing it doesn't make you weak. It makes you human. Finally.</p>
+
+<h2>What the Darkness Holds</h2>
+
+<p>The situation with your father. I wasn't expecting this to come through so strongly, but it's right here, front and center in your field. There's an unfinished conversation between the two of you. Not one specific conversation, more like a lifetime of words that were replaced with silence and practical actions. He showed love through doing, not saying. And you inherited that pattern. But here's what the energy wants you to know: that pattern doesn't belong to you. You picked it up because you didn't know there was another way. Now you do. Put it down.</p>
+
+<p>Around your heart space, I'm feeling something I can only describe as a thick fog. Not cold, not hostile. Just dense. Like your heart has been wrapped in cotton to protect it from further damage, but the cotton has gotten so thick that now even the good things can't get through. Sarah's tenderness. Your daughter's laughter. The warmth of an evening where nothing needs to be fixed. These things are bouncing off the barrier you built, and you can't understand why life feels muted even when everything around you should feel alive.</p>
+
+<div class="highlightbox">
+<p>You've been strong for so long that strength has become your prison. The bravest thing you could do right now isn't to push harder or figure out more. It's to sit in a room alone and let yourself feel the weight of everything you've been carrying without trying to fix it. Not for an hour. For five minutes. That's all it would take to crack the wall.</p>
+</div>
+
+<h2>The Shape of What Comes Next</h2>
+
+<p>The career shift you've been mulling over since January. You haven't told anyone about it because you're afraid that saying it out loud would make it real, and real means you'd have to do something about it. I understand that fear. But I'm watching the timeline, David, and if you don't make this move by June, the window doesn't close forever, but it narrows considerably. The energy favors courage right now. It won't always.</p>
+
+<p>Watch for a Thursday. I know that sounds oddly specific, but I keep seeing Thursdays in your energy field. Something will arrive on a Thursday in the next six weeks that reshuffles the deck entirely. It might be a phone call, a letter, an encounter with someone whose face you haven't seen in a long time. However it comes, your gut will recognize it before your brain does. Trust the gut.</p>
+
+<div class="chantblock">
+    <div class="latinverse">Ex Silentio Fortitudo</div>
+    <div class="englishverse">"From silence comes strength."</div>
+</div>
+
+<p>I'm closing this reading now, David. But before I do, I want to leave you with an image. Picture a house with every light on, every room illuminated, every corner visible. That's what your life looks like from the outside. Now picture one room in that house with the door closed, the lights off, and something sitting in the center of the floor that you've been walking past for years, pretending it isn't there. You know which room. You know what's sitting in it. The next chapter of your life begins the moment you open that door.</p>
+
+<div class="warningseal">This reading exists in the space between silence and sound. What has been spoken here cannot be unheard.</div>
+
+<div class="signature">Maren Crow</div>
+<div class="archivefooter">
+    SESSION ID: 117-VOID-CAPRICORN // STATUS: SEALED
+</div>
+</div>
+</body>
+</html>
