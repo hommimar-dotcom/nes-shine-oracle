@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Upright:wght@300;400;600&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Alex+Brush&family=Cinzel:wght@700&display=swap');
+
+:root {
+    --bg-dark: #0a0b0c;
+    --text-main: #d4cfc5;
+    --accent-gold: #bda783;
+    --accent-dim: #5c5851;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+html, body {
+    margin: 0; padding: 0;
+    background-color: var(--bg-dark);
+    /* Daha küçük, daha sık tekrarlı ve hafif transparan (Balenciaga pattern) SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='130'%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Cinzel, serif' font-size='18px' font-weight='700' fill='rgba(189,167,131,0.06)' transform='rotate(-30, 90, 65)' letter-spacing='5'%3EJESSICA%3C/text%3E%3C/svg%3E");
+    background-repeat: repeat;
+    color: var(--text-main);
+    font-family: 'Spectral', serif;
+    width: 100%; overflow-x: hidden;
+}
+
+body { 
+    line-height: 2.2; 
+    font-size: 24px; 
+    overflow-wrap: break-word; 
+    font-weight: 300;
+}
+
+.reading-container {
+    width: 100%; max-width: 1000px; margin: 0 auto; padding: 100px 80px;
+    background: transparent;
+    border-left: 1px solid rgba(189, 167, 131, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.header-section {
+    margin-bottom: 100px;
+    padding-left: 40px;
+    border-left: 3px solid var(--accent-gold);
+}
+
+.eyebrow {
+    display: block;
+    font-family: 'Cormorant Upright', serif;
+    font-size: 18px;
+    letter-spacing: 8px;
+    color: var(--accent-dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.main-title {
+    font-family: 'Cormorant Upright', serif;
+    font-size: clamp(40px, 6vw, 70px);
+    letter-spacing: 4px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    margin: 0 0 20px 0;
+    font-weight: 400;
+    line-height: 1.1;
+}
+
+.recipient-line {
+    font-family: 'Spectral', serif;
+    font-style: italic;
+    font-size: 26px;
+    color: #9c958a;
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+}
+
+p {
+    text-align: justify;
+    margin-bottom: 60px;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+}
+
+.opening-statement::first-line {
+    font-variant: small-caps;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: #ede9e1;
+}
+
+.ornament {
+    text-align: center;
+    color: var(--accent-dim);
+    font-size: 24px;
+    letter-spacing: 20px;
+    margin: 120px 0 30px 0;
+}
+
+.section-title {
+    font-family: 'Cormorant Upright', serif;
+    font-size: clamp(28px, 4vw, 42px);
+    color: var(--accent-gold);
+    margin: 0 0 80px 0;
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    font-weight: 400;
+    display: inline-block;
+}
+
+.insight-quote {
+    position: relative;
+    margin: 140px 60px;
+    padding: 0;
+    font-style: italic;
+    font-size: 30px;
+    line-height: 2;
+    color: #ede9e1;
+    text-align: center;
+    border: none;
+    background: none;
+    box-shadow: none;
+}
+
+.insight-quote::before {
+    content: "“";
+    display: block;
+    font-family: 'Cormorant Upright', serif;
+    font-size: 180px;
+    color: rgba(189, 167, 131, 0.15);
+    line-height: 0;
+    margin-bottom: 60px;
+    text-align: center;
+}
+
+.insight-quote::after {
+    content: "”";
+    display: block;
+    font-family: 'Cormorant Upright', serif;
+    font-size: 180px;
+    color: rgba(189, 167, 131, 0.15);
+    line-height: 0;
+    margin-top: 100px;
+    text-align: center;
+}
+
+.closing-seal {
+    text-align: center;
+    margin-top: 250px;
+}
+
+.signature-block {
+    text-align: right;
+    font-family: 'Alex Brush', cursive;
+    font-size: clamp(80px, 12vw, 140px);
+    color: var(--accent-gold);
+    margin-top: 150px;
+    opacity: 0.9;
+}
+
+/* PDF YAZDIRMA AYARLARI */
+@media print {
+    @page { size: auto; margin: 15mm; }
+    html, body {
+        background-color: var(--bg-dark) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .reading-container { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 25mm !important; border-left: none !important; background: transparent !important; }
+    .section-title { page-break-before: always; }
+    p { orphans: 3; widows: 3; font-size: 16pt; line-height: 1.8; }
+}
+</style>
+</head>
+<body>
+
+<div class="reading-container">
+
+<div class="header-section">
+    <span class="eyebrow">A Bespoke Divination</span>
+    <h1 class="main-title">The Gravity of Unsaid Things</h1>
+    <div class="recipient-line">Specifically channeled for Jessica</div>
+</div>
+
+<p class="opening-statement">THE ENERGY I ENCOUNTERED when reaching into your field was not what I expected. There is a profound stillness around you, Jessica, but it is not the stillness of peace. It is the stillness of someone holding their breath, waiting for the ground to shift.</p>
+
+<p>You have been carrying a quiet, heavy question for months. It sits in your throat, right behind the words you choose to speak instead. The situation regarding your career transition isn't just about professional fulfillment anymore; it has become a mirror reflecting a much deeper hesitancy. You are standing on the edge of the diving board, negotiating with the water, trying to calculate the exact temperature before you jump.</p>
+
+<div class="ornament">⟡ ⟡ ⟡</div>
+<div style="text-align:center;"><h2 class="section-title">The Architecture of Your Delay</h2></div>
+
+<p>What the cards and the intuitive current show is a distinct pattern of over-preparation disguised as wisdom. You tell yourself you are simply being practical, waiting for the right moment, the perfect alignment of finances and opportunity. But the energy reveals this is a defense mechanism. The version of you that knows how to survive in your current environment is terrified of the version of you that will thrive outside of it.</p>
+
+<blockquote class="insight-quote">
+    You will never feel entirely ready for the life you have asked for. The readiness is forged in the act of stepping forward, not in the waiting.
+</blockquote>
+
+<p>Notice what happens in your body around the 18th of next month. There will be a small, seemingly insignificant moment—an email, a passing comment—that will trigger an outsized emotional reaction. Do not ignore it.</p>
+
+<div class="closing-seal">
+    <div class="text" style="display:inline-block; padding: 10px; font-family: 'Cormorant Upright', serif; color: var(--accent-dim); letter-spacing: 12px; text-transform: uppercase;">The Veil is Closed</div>
+</div>
+
+<div class="signature-block">
+    Eleanor Vance
+</div>
+
+</div>
+</body>
+</html>

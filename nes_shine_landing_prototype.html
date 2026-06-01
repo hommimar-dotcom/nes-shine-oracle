@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nes Shine Oracle | Akashic Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #9b6dff;
+            --primary-hover: #b490ff;
+            --bg-dark: #07050d;
+            --glass-bg: rgba(20, 15, 30, 0.4);
+            --glass-border: rgba(155, 109, 255, 0.2);
+            --text-main: #f0ebf5;
+            --text-muted: #a095b5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(45, 20, 80, 0.5) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(155, 109, 255, 0.1) 0%, transparent 50%);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated glowing orb behind the card */
+        .glow-orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(155, 109, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            animation: pulse 8s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #9b6dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(155, 109, 255, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(155, 109, 255, 0.2);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-glow {
+            display: inline-block;
+            width: 100%;
+            padding: 1.2rem;
+            margin-top: 1rem;
+            background: transparent;
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: 1;
+        }
+
+        .btn-glow::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, var(--primary), #6a35ff);
+            z-index: -1;
+            transition: opacity 0.4s ease;
+            opacity: 0.1;
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(155, 109, 255, 0.4);
+            border-color: #fff;
+        }
+
+        .btn-glow:hover::before {
+            opacity: 1;
+        }
+
+        .price-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .price-amount {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            background: rgba(155, 109, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow-orb"></div>
+
+    <div class="container">
+        <div class="glass-card">
+            <h1>NES SHINE</h1>
+            <div class="subtitle">She doesn't guess. She knows.</div>
+
+            <form onsubmit="event.preventDefault(); alert('Stripe Checkout will trigger here.');">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" class="form-control" placeholder="Enter your first name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label>What burdens your soul?</label>
+                    <textarea class="form-control" placeholder="Briefly describe your focus area (Love, Career, Dark Forces)..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-glow">ENTER THE AKASHIC RECORDS</button>
+            </form>
+
+            <div class="price-tag">
+                <span>Deep Oracle Reading</span>
+                <span class="price-amount">$19.99</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create subtle floating particles for mystical effect
+        const body = document.querySelector('body');
+        for(let i=0; i<20; i++) {
+            let particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Random properties
+            let size = Math.random() * 4 + 1;
+            let startX = Math.random() * window.innerWidth;
+            let startY = Math.random() * window.innerHeight;
+            let duration = Math.random() * 20 + 10;
+            
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = startX + 'px';
+            particle.style.top = startY + 'px';
+            
+            // Animate
+            particle.animate([
+                { transform: `translate(0, 0)`, opacity: 0 },
+                { opacity: Math.random() * 0.5 + 0.2, offset: 0.1 },
+                { opacity: Math.random() * 0.5 + 0.2, offset: 0.9 },
+                { transform: `translate(${Math.random()*200 - 100}px, -${window.innerHeight}px)`, opacity: 0 }
+            ], {
+                duration: duration * 1000,
+                iterations: Infinity,
+                delay: Math.random() * 5000
+            });
+            
+            body.appendChild(particle);
+        }
+    </script>
+</body>
+</html>

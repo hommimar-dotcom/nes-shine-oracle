@@ -1,0 +1,17 @@
+{
+    "client_name": "__api_usage__",
+    "sessions": [
+        {
+            "timestamp": "2026-03-10 04:46:17 EDT",
+            "date": "2026-03-10",
+            "client": "fatsy2k@yahoo.co.uk",
+            "topic": "House Psychic Reading & Energy Scan | Complete Home Purification | Banish Stagnant Energy - Blocks | Deep Space Clearing",
+            "tokens_in": 61781,
+            "tokens_out": 30092,
+            "total_tokens": 91873,
+            "api_calls": 17,
+            "cost_usd": 0.484666,
+            "qc_rounds": 8
+        }
+    ]
+}

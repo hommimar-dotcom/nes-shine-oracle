@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cardo:ital,wght@0,400;0,700;1,400&family=Tangerine:wght@700&display=swap');
+
+:root {
+    --accent: #c9a84c;
+    --accent-dark: #1b5e20;
+    --bg: #020802;
+    --text: #e8e0d0;
+}
+
+* { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+html, body {
+    margin: 0; padding: 0;
+    background-color: var(--bg);
+    color: var(--accent);
+    font-family: 'Spectral', serif;
+    width: 100%; overflow-x: hidden;
+}
+
+body { line-height: 2.4; font-size: 25px; overflow-wrap: break-word; }
+
+.page-wrapper {
+    width: 100%; max-width: 1100px; margin: 0 auto; padding: 120px 60px;
+    background: radial-gradient(circle at center, #0a1a08 0%, #020502 100%);
+    border-left: 3px solid rgba(27, 94, 32, 0.4);
+    border-right: 3px solid rgba(27, 94, 32, 0.4);
+    box-shadow: 0 0 300px rgba(27, 94, 32, 0.3);
+    position: relative;
+}
+
+h1 {
+    font-family: 'Cardo', serif;
+    text-align: center;
+    font-size: clamp(40px, 7vw, 78px);
+    letter-spacing: clamp(6px, 1.8vw, 18px);
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0 0 50px 0;
+    text-shadow: 0 0 80px rgba(201, 168, 76, 0.4);
+    border-bottom: 3px solid rgba(27, 94, 32, 0.35);
+    padding-bottom: 50px;
+}
+
+.subtitle {
+    text-align: center;
+    font-family: 'Cardo', serif;
+    font-size: clamp(14px, 2.2vw, 23px);
+    letter-spacing: 14px;
+    color: #6b8f5e;
+    margin: -30px 0 160px 0;
+    text-transform: uppercase;
+}
+
+h2 {
+    font-family: 'Cardo', serif;
+    font-size: clamp(26px, 4vw, 50px);
+    color: var(--accent);
+    margin: 180px 0 90px 0;
+    border-left: 18px solid var(--accent-dark);
+    padding: 25px 0 25px 55px;
+    letter-spacing: 12px;
+    background: linear-gradient(90deg, rgba(27, 94, 32, 0.4), transparent);
+    text-transform: uppercase;
+}
+
+p {
+    text-align: justify;
+    margin-bottom: 80px;
+    color: var(--text);
+    font-weight: 300;
+    letter-spacing: 1.1px;
+}
+
+.dropcap {
+    float: left;
+    font-family: 'Tangerine', cursive;
+    font-size: clamp(140px, 17vw, 230px);
+    line-height: 0.75;
+    padding: 25px 35px 0 0;
+    color: #2e7d32;
+    text-shadow: 10px 10px 80px rgba(0,0,0,0.8);
+}
+
+.highlightbox {
+    border: 3px solid var(--accent-dark);
+    background-color: rgba(27, 94, 32, 0.12);
+    padding: clamp(40px, 7vw, 100px);
+    margin: 160px 0;
+    box-shadow: inset 0 0 200px rgba(0,0,0,0.8);
+}
+
+.chantblock {
+    text-align: center;
+    margin: 200px 0;
+    padding: 130px 50px;
+    border-top: 3px solid var(--accent-dark);
+    border-bottom: 3px solid var(--accent-dark);
+    background: radial-gradient(circle, rgba(27, 94, 32, 0.5) 0%, rgba(0,0,0,0) 85%);
+}
+
+.latinverse {
+    font-family: 'Cardo', serif;
+    font-size: clamp(24px, 4vw, 46px);
+    color: #2e7d32;
+    margin-bottom: 50px;
+    letter-spacing: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.englishverse {
+    font-family: 'Spectral', serif;
+    font-style: italic;
+    font-size: clamp(20px, 3.2vw, 40px);
+    color: #99aa88;
+}
+
+.warningseal {
+    color: var(--accent);
+    text-align: center;
+    border: 8px solid var(--accent-dark);
+    padding: 100px 50px;
+    margin-top: 300px;
+    letter-spacing: 18px;
+    font-family: 'Cardo', serif;
+    font-size: clamp(18px, 2.8vw, 30px);
+    background-color: #040a03;
+    text-transform: uppercase;
+}
+
+.signature {
+    text-align: right;
+    font-family: 'Tangerine', cursive;
+    font-size: clamp(110px, 17vw, 210px);
+    color: #2e7d32;
+    margin-top: 300px;
+    padding-right: 10%;
+    opacity: 0.9;
+    text-shadow: 0 0 120px rgba(46, 125, 50, 0.5);
+}
+
+.archivefooter {
+    text-align: center; font-size: 18px; color: #556644;
+    margin-top: 500px; letter-spacing: 25px; text-transform: uppercase;
+    font-family: 'Cardo', serif;
+}
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+<h1>Where the Roots Remember</h1>
+<div class="subtitle">A Deep Guidance Reading for Elena</div>
+
+<p><span class="dropcap">D</span>ear Elena, when I turned my attention toward you, the first thing I noticed wasn't your question. It was the silence behind it. There's a question beneath your question, and we both know which one it is. You didn't come here for reassurance. You came because something inside you has already made a decision, and you need someone to see it clearly enough to say it out loud. So here I am. And here it is.</p>
+
+<p>Your energy right now reminds me of a forest in late autumn. The leaves have already turned, already begun to fall, but you're standing there refusing to acknowledge winter. There's beauty in that stubbornness. Real beauty. But there's also exhaustion, and your body is telling me it's been paying the price for your heart's refusal to let go. The lower back pain, the disrupted sleep, the way your appetite comes and goes. These aren't coincidences.</p>
+
+<h2>The Seeds You Planted Long Ago</h2>
+
+<p>Let me talk about David for a moment. I know he occupies a significant amount of your emotional landscape, even more than you'd like to admit. The connection between you two isn't dead, Elena, but it's been buried under so many layers of hurt and miscommunication that neither of you can feel the original pulse anymore. It's still there. But what I need you to hear is this: just because something is alive doesn't mean it's meant to be exhumed.</p>
+
+<p>Some seeds are meant to remain underground. They do their work in the dark, invisible, feeding the soil, becoming the nutrients that make the next thing grow. David was a seed like that. What he planted in you, the confidence, the desire, the understanding of what you will and won't accept, those things are rising up now as your own strength. You don't need to go back to the garden to thank the seed. You just need to keep growing.</p>
+
+<div class="highlightbox">
+<p>The love you're searching for isn't behind you. It isn't even in front of you yet. It's inside the version of yourself you haven't had the courage to become. And she's waiting. She's been waiting for a very long time. She isn't impatient, but she is ready.</p>
+</div>
+
+<h2>Branches Reaching Toward the Light</h2>
+
+<p>I see something shifting in your professional life around early May. There's an offer or an idea that arrives wearing humble clothes. It won't look impressive at first. In fact, you might almost dismiss it. But underneath the plain exterior, this thing carries more potential than anything you've encountered in the last two years. The key is not to judge it by its surface. Dig deeper. Ask questions that nobody else is asking.</p>
+
+<p>Your mother's energy keeps coming through. Not in a heavy way, more like a gentle persistent knock. She's worried, but not about what you think. She isn't worried about your decisions. She's worried that you've stopped trusting yourself. And honestly? She's not wrong. Somewhere in the last year, you started outsourcing your confidence to other people's opinions, and that isn't you. That's never been you.</p>
+
+<div class="chantblock">
+    <div class="latinverse">Radix Omnium Veritas</div>
+    <div class="englishverse">"The root of all things is truth."</div>
+</div>
+
+<p>Before I seal this reading, I want to leave you with something. The next time you feel that familiar heaviness settle over you, the one that whispers "nothing's going to change," I want you to put your bare feet on the ground. Literally. Grass, earth, stone, whatever is beneath you. Close your eyes and breathe into your belly. Not your chest. Your belly. Feel the ground push back. That push? That's the earth reminding you that you're held. You've always been held.</p>
+
+<div class="warningseal">This reading is rooted and sealed. The energies spoken here are now woven into the living earth.</div>
+
+<div class="signature">Ivy Thorne</div>
+<div class="archivefooter">
+    SESSION ID: 662-TERRA-VIRGO // STATUS: SEALED
+</div>
+</div>
+</body>
+</html>
