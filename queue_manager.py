@@ -42,7 +42,7 @@ class QueueManager:
             with open(self.queue_file, 'w') as f:
                 json.dump({"queue": [], "completed": []}, f)
     
-    def add_to_queue(self, client_email, order_note, reading_topic, target_length="8000", model_choice="gemini-3.1-pro"):
+    def add_to_queue(self, client_email, order_note, reading_topic, target_length="8000", model_choice="gemini-3.1-pro-preview"):
         """Adds a new reading request to the queue."""
         new_item = {
             "id": datetime.now().strftime("%Y%m%d%H%M%S"),
