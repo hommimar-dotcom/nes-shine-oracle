@@ -113,7 +113,7 @@ with tab1:
 
 with tab2:
     st.subheader("✨ AI VOICE READY FORMATTER")
-    st.markdown("Ham okuma metnini (HTML dahil) buraya yapıştırın. Gemini 3.1 Pro onu ElevenLabs için kusursuz hale getirecek.")
+    st.markdown("Ham okuma metnini (HTML dahil) buraya yapıştırın. Gemini 3.1 Pro Preview onu ElevenLabs için kusursuz hale getirecek.")
     
     raw_input = st.text_area("Ham Metin (Raw Text)", height=300, key="formatter_input")
     
