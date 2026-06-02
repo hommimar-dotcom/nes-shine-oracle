@@ -223,7 +223,7 @@ class MemoryManager:
     def _db_list_all(self):
         clients = []
         try:
-            result = self.supabase.table("client_memories").select("client_key, client_name, sessions").execute()
+            result = self.supabase.table("client_memories").select("client_key, client_name, sessions").order("updated_at", desc=True).limit(10000).execute()
             for row in result.data:
                 if row["client_key"] == "__app_settings__":
                     continue
