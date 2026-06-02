@@ -453,10 +453,10 @@ with st.sidebar:
             file_path = os.path.join(archive_dir, selected_file)
             with open(file_path, "rb") as f:
                 st.download_button(
-                    label="DOWNLOAD RECORD [PDF]",
+                    label="DOWNLOAD RECORD",
                     data=f,
                     file_name=selected_file,
-                    mime="application/pdf",
+                    mime="text/html" if selected_file.endswith(".html") else "application/pdf",
                     key="sidebar_download"
                 )
     else:
@@ -809,10 +809,10 @@ with tab2:
                 if item.get("pdf_path") and os.path.exists(item["pdf_path"]):
                     with open(item["pdf_path"], "rb") as pdf_file:
                         st.download_button(
-                            label="📥 DOWNLOAD PDF",
+                            label="📥 DOWNLOAD RECORD",
                             data=pdf_file,
                             file_name=os.path.basename(item["pdf_path"]),
-                            mime="application/pdf",
+                            mime="text/html" if item["pdf_path"].endswith(".html") else "application/pdf",
                             key=f"dl_{item['id']}",
                             use_container_width=True
                         )
@@ -926,7 +926,7 @@ with tab3:
             else:
                 st.warning("🆕 NEW CLIENT DETECTED: A new memory file will be created.")
 
-        uploaded_pdfs = st.file_uploader("Select PDF Files", type=["pdf"], key="import_pdf_vault", accept_multiple_files=True)
+        uploaded_pdfs = st.file_uploader("Select PDF or HTML Files", type=["pdf", "html"], key="import_pdf_vault", accept_multiple_files=True)
         
         if uploaded_pdfs:
             st.markdown(f"**📂 {len(uploaded_pdfs)} Files Ready to Process:**")

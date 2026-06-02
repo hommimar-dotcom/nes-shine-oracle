@@ -379,12 +379,15 @@ class MemoryManager:
         from agents import OracleBrain # Local import to avoid circular dependency
         
         try:
-            pdf_reader = PdfReader(io.BytesIO(pdf_file.read()))
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text() or ""
+            if pdf_file.name.endswith(".html"):
+                text = pdf_file.read().decode("utf-8")
+            else:
+                pdf_reader = PdfReader(io.BytesIO(pdf_file.read()))
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text() or ""
         except Exception as e:
-            return False, f"PDF okuma hatası: {str(e)}"
+            return False, f"Dosya okuma hatası: {str(e)}"
         
         if not text.strip():
             return False, "PDF'den metin çıkarılamadı."
