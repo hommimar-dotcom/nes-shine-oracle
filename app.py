@@ -975,15 +975,17 @@ with tab3:
         if clients:
             st.write(f"Total: {len(clients)} Clients")
             
-            # Select Client
-            client_names = [c["client_name"] for c in clients]
-            selected_name = st.selectbox("SELECT CLIENT TO MANAGE", client_names, key="client_mgr")
+            # Create a mapping of display string -> client_key
+            client_options = {f"{c['client_name']} ({c['filename']})": c['filename'] for c in clients}
             
-            if selected_name:
+            selected_display = st.selectbox("SELECT CLIENT TO MANAGE", list(client_options.keys()), key="client_mgr")
+            
+            if selected_display:
+                selected_key = client_options[selected_display]
                 st.markdown("---")
-                st.markdown(f"### 📂 {selected_name}")
+                st.markdown(f"### 📂 {selected_display}")
                 
-                mem = mem_mgr.load_memory(selected_name)
+                mem = mem_mgr.load_memory(selected_key)
                 
                 if mem and "sessions" in mem and mem["sessions"]:
                     st.write(f"{len(mem['sessions'])} sessions")
@@ -997,18 +999,18 @@ with tab3:
                         c1, c2, c3 = st.columns([3, 4, 1])
                         with c1:
                             # EDITABLE DATE
-                            new_date = st.text_input("Date", value=ts, key=f"date_{selected_name}_{original_idx}", label_visibility="collapsed")
+                            new_date = st.text_input("Date", value=ts, key=f"date_{selected_key}_{original_idx}", label_visibility="collapsed")
                             if new_date != ts:
-                                if st.button("💾", key=f"save_{selected_name}_{original_idx}", help="Save new date"):
-                                    if mem_mgr.update_session_date(selected_name, original_idx, new_date):
+                                if st.button("💾", key=f"save_{selected_key}_{original_idx}", help="Save new date"):
+                                    if mem_mgr.update_session_date(selected_key, original_idx, new_date):
                                         st.success("Updated!")
                                         time.sleep(0.5)
                                         st.rerun()
                         with c2:
                             st.write(topic)
                         with c3:
-                            if st.button("🗑️", key=f"del_s_{selected_name}_{original_idx}"):
-                                if mem_mgr.delete_session(selected_name, original_idx):
+                            if st.button("🗑️", key=f"del_s_{selected_key}_{original_idx}"):
+                                if mem_mgr.delete_session(selected_key, original_idx):
                                     st.success("Deleted.")
                                     time.sleep(0.5)
                                     st.rerun()
@@ -1027,9 +1029,9 @@ with tab3:
                 
                 # Danger Zone
                 with st.expander("DANGER ZONE"):
-                    if st.button("DELETE ENTIRE CLIENT", key=f"wipe_{selected_name}", type="primary"):
-                        mem_mgr.delete_client(selected_name)
-                        st.warning(f"Deleted {selected_name}")
+                    if st.button("DELETE ENTIRE CLIENT", key=f"wipe_{selected_key}", type="primary"):
+                        mem_mgr.delete_client(selected_key)
+                        st.warning(f"Deleted {selected_key}")
                         time.sleep(1)
                         st.rerun()
         else:
