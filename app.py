@@ -1038,6 +1038,8 @@ with tab3:
                             st.warning(f"Deleted {selected_key}")
                             time.sleep(1)
                             st.rerun()
+            else:
+                st.warning("Eşleşme bulunamadı.")
         elif search_query:
             st.info("Arama yapmak için en az 3 karakter girin.")
         else:
