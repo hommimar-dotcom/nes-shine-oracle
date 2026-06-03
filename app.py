@@ -971,72 +971,77 @@ with tab3:
     with col_v2:
         st.markdown("### 📋 REGISTERED CLIENTS")
         
-        clients = mem_mgr.list_all_clients()
-        if clients:
-            st.write(f"Total: {len(clients)} Clients")
+        # --- CLIENT VAULT ---
+        st.markdown("### 🔍 SEARCH CLIENT MEMORY")
+        search_query = st.text_input("Enter Client Email or Name to search", key="client_search_input")
+        
+        if search_query and len(search_query) >= 3:
+            matches = mem_mgr.search_clients(search_query)
             
-            # Create a mapping of display string -> client_key
-            client_options = {f"{c['client_name']} ({c['filename']})": c['filename'] for c in clients}
-            
-            selected_display = st.selectbox("SELECT CLIENT TO MANAGE", list(client_options.keys()), key="client_mgr")
-            
-            if selected_display:
-                selected_key = client_options[selected_display]
-                st.markdown("---")
-                st.markdown(f"### 📂 {selected_display}")
+            if matches:
+                # Create a mapping of display string -> client_key
+                client_options = {f"{c['client_name']} ({c['filename']})": c['filename'] for c in matches}
                 
-                mem = mem_mgr.load_memory(selected_key)
+                selected_display = st.selectbox("SELECT CLIENT TO MANAGE", list(client_options.keys()), key="client_mgr")
                 
-                if mem and "sessions" in mem and mem["sessions"]:
-                    st.write(f"{len(mem['sessions'])} sessions")
+                if selected_display:
+                    selected_key = client_options[selected_display]
+                    st.markdown("---")
+                    st.markdown(f"### 📂 {selected_display}")
                     
-                    sessions_indexed = list(enumerate(mem["sessions"]))
+                    mem = mem_mgr.load_memory(selected_key)
                     
-                    for original_idx, session in reversed(sessions_indexed):
-                        ts = session.get("timestamp", session.get("date", "?"))
-                        topic = session.get("topic", "No Topic")
+                    if mem and "sessions" in mem and mem["sessions"]:
+                        st.write(f"{len(mem['sessions'])} sessions")
                         
-                        c1, c2, c3 = st.columns([3, 4, 1])
-                        with c1:
-                            # EDITABLE DATE
-                            new_date = st.text_input("Date", value=ts, key=f"date_{selected_key}_{original_idx}", label_visibility="collapsed")
-                            if new_date != ts:
-                                if st.button("💾", key=f"save_{selected_key}_{original_idx}", help="Save new date"):
-                                    if mem_mgr.update_session_date(selected_key, original_idx, new_date):
-                                        st.success("Updated!")
+                        sessions_indexed = list(enumerate(mem["sessions"]))
+                        
+                        for original_idx, session in reversed(sessions_indexed):
+                            ts = session.get("timestamp", session.get("date", "?"))
+                            topic = session.get("topic", "No Topic")
+                            
+                            c1, c2, c3 = st.columns([3, 4, 1])
+                            with c1:
+                                # EDITABLE DATE
+                                new_date = st.text_input("Date", value=ts, key=f"date_{selected_key}_{original_idx}", label_visibility="collapsed")
+                                if new_date != ts:
+                                    if st.button("💾", key=f"save_{selected_key}_{original_idx}", help="Save new date"):
+                                        if mem_mgr.update_session_date(selected_key, original_idx, new_date):
+                                            st.success("Updated!")
+                                            time.sleep(0.5)
+                                            st.rerun()
+                            with c2:
+                                st.write(topic)
+                            with c3:
+                                if st.button("🗑️", key=f"del_s_{selected_key}_{original_idx}"):
+                                    if mem_mgr.delete_session(selected_key, original_idx):
+                                        st.success("Deleted.")
                                         time.sleep(0.5)
                                         st.rerun()
-                        with c2:
-                            st.write(topic)
-                        with c3:
-                            if st.button("🗑️", key=f"del_s_{selected_key}_{original_idx}"):
-                                if mem_mgr.delete_session(selected_key, original_idx):
-                                    st.success("Deleted.")
-                                    time.sleep(0.5)
-                                    st.rerun()
-                                    
-                        # Display Hidden Session Details
-                        with st.expander("👁️ Show Hidden Session Context"):
-                            st.markdown(f"**Key Prediction:** {session.get('key_prediction', '-')}")
-                            st.markdown(f"**Hook Left:** {session.get('hook_left', '-')}")
-                            st.markdown(f"**Client Mood:** {session.get('client_mood', '-')}")
-                            st.markdown(f"**Promises Made:** {session.get('promises_made', '-')}")
-                            st.markdown(f"**Reading Summary:** {session.get('reading_summary', '-')}")
-                            
-                        st.divider()
-                else:
-                    st.info("No sessions found.")
-                
-                # Danger Zone
-                with st.expander("DANGER ZONE"):
-                    if st.button("DELETE ENTIRE CLIENT", key=f"wipe_{selected_key}", type="primary"):
-                        mem_mgr.delete_client(selected_key)
-                        st.warning(f"Deleted {selected_key}")
-                        time.sleep(1)
-                        st.rerun()
+                                        
+                            # Display Hidden Session Details
+                            with st.expander("👁️ Show Hidden Session Context"):
+                                st.markdown(f"**Key Prediction:** {session.get('key_prediction', '-')}")
+                                st.markdown(f"**Hook Left:** {session.get('hook_left', '-')}")
+                                st.markdown(f"**Client Mood:** {session.get('client_mood', '-')}")
+                                st.markdown(f"**Promises Made:** {session.get('promises_made', '-')}")
+                                st.markdown(f"**Reading Summary:** {session.get('reading_summary', '-')}")
+                                
+                            st.divider()
+                    else:
+                        st.info("No sessions found.")
+                    
+                    # Danger Zone
+                    with st.expander("DANGER ZONE"):
+                        if st.button("DELETE ENTIRE CLIENT", key=f"wipe_{selected_key}", type="primary"):
+                            mem_mgr.delete_client(selected_key)
+                            st.warning(f"Deleted {selected_key}")
+                            time.sleep(1)
+                            st.rerun()
+        elif search_query:
+            st.info("Arama yapmak için en az 3 karakter girin.")
         else:
-            st.info("Database is empty.")
-            
+            st.info("Müşteri aramak için yukarıdaki kutuyu kullanın.")
         # EMAIL TOOLS (Moved from Sidebar)
         st.markdown("### 📧 CAMPAIGN TOOLS")
         with st.expander("OPEN EMAIL MANAGER"):

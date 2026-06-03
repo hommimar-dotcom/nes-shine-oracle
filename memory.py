@@ -259,6 +259,38 @@ class MemoryManager:
                         })
         return clients
 
+    # ==================== SEARCH ====================
+    def search_clients(self, search_term):
+        if not search_term or len(search_term) < 3:
+            return []
+        if self.use_db:
+            return self._db_search_clients(search_term)
+        return self._file_search_clients(search_term)
+
+    def _db_search_clients(self, search_term):
+        clients = []
+        try:
+            # Basic text search on client_key or client_name using ilike
+            result = self.supabase.table("client_memories").select("client_key, client_name, sessions").or_(f"client_key.ilike.%{search_term}%,client_name.ilike.%{search_term}%").order("updated_at", desc=True).limit(50).execute()
+            for row in result.data:
+                if row["client_key"] in ["__app_settings__", "__api_usage__"]:
+                    continue
+                sessions = json.loads(row["sessions"]) if isinstance(row["sessions"], str) else row["sessions"]
+                clients.append({
+                    "filename": row["client_key"],
+                    "client_name": row["client_name"],
+                    "session_count": len(sessions) if sessions else 0
+                })
+        except Exception as e:
+            print(f"Search DB error: {e}")
+        return clients
+
+    def _file_search_clients(self, search_term):
+        clients = self._file_list_all()
+        term = search_term.lower()
+        matches = [c for c in clients if term in c.get('filename', '').lower() or term in c.get('client_name', '').lower()]
+        return matches[:50]
+
     # ==================== DELETE ====================
     def delete_client(self, client_name):
         if self.use_db:
