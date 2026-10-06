@@ -846,12 +846,19 @@ with tab2:
                     
                     try:
                         brain = OracleBrain(valid_keys)
+                        
+                        def batch_status(msg):
+                            # This tiny UI update keeps the WebSocket connection alive during long queues!
+                            # It prevents Cloudflare/Railway from dropping the connection on the 3rd/4th round.
+                            status_box.info(f"🔮 Processing {idx+1}/{len(pending_items)}: {item['client_email']}<br><small>{msg}</small>")
+                            
                         raw_text, delivery_msg, usage_stats, audio_path = brain.run_cycle(
                             item["order_note"],
                             item["reading_topic"],
                             client_email=item["client_email"],
                             target_length=item["target_length"],
-                            model_choice=item.get("model_choice", "gemini-3.1-pro-preview") # STRICT FALLBACK TO HQ MODEL
+                            model_choice=item.get("model_choice", "gemini-3.1-pro-preview"),
+                            progress_callback=batch_status
                         )
                         
                         # Generate PDF
