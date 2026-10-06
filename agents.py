@@ -648,7 +648,37 @@ class OracleBrain:
 
                 response = target_model.generate_content(prompt, stream=True, request_options={'timeout': 300})
                 full_text = ""
-                for chunk in response:
+                
+                # MATHEMATICAL FIX: Prevent silent socket hangs by wrapping the generator in a threaded queue
+                import threading
+                import queue
+                
+                def yield_with_timeout(iterable, timeout_seconds):
+                    q = queue.Queue()
+                    def worker():
+                        try:
+                            for item in iterable:
+                                q.put(("item", item))
+                        except Exception as e:
+                            q.put(("error", e))
+                        q.put(("done", None))
+                    
+                    t = threading.Thread(target=worker, daemon=True)
+                    t.start()
+                    
+                    while True:
+                        try:
+                            msg_type, val = q.get(timeout=timeout_seconds)
+                            if msg_type == "item":
+                                yield val
+                            elif msg_type == "error":
+                                raise val
+                            elif msg_type == "done":
+                                break
+                        except queue.Empty:
+                            raise TimeoutError("Stream Google tarafından sessizce kesildi (TCP Hang).")
+                
+                for chunk in yield_with_timeout(response, 20):
                     full_text += chunk.text
                     yield chunk.text
                 
